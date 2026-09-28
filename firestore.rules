@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isLoggedIn() { return request.auth != null; }
+    match /admins/{adminId} {
+      allow read, create, update: if isLoggedIn() && request.auth.uid == adminId;
+      allow delete: if false;
+    }
+    match /products/{productId} { allow read, create, update, delete: if isLoggedIn(); }
+    match /categories/{categoryId} { allow read, create, update, delete: if isLoggedIn(); }
+    match /customers/{customerId} { allow read, create, update, delete: if isLoggedIn(); }
+    match /sales/{saleId} { allow read, create, update, delete: if isLoggedIn(); }
+    match /orders/{orderId} { allow read, create, update, delete: if isLoggedIn(); }
+    match /stock_history/{historyId} {
+      allow read, create: if isLoggedIn();
+      allow update, delete: if false;
+    }
+    match /notifications/{notificationId} { allow read, create, update, delete: if isLoggedIn(); }
+    match /settings/{settingId} {
+      allow read, create, update: if isLoggedIn();
+      allow delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "74190012172",
+    "project_id": "storeventory-f69d5",
+    "storage_bucket": "storeventory-f69d5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:74190012172:android:bb3a81527c862fd5735329",
+        "android_client_info": {
+          "package_name": "com.example.storeventory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDI1XeGImWDhstbjH5iw4L4eMWP05vZ3Io"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
