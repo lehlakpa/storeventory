@@ -26,6 +26,20 @@ class SaleUiModel {
   final int quantity;
   final double unitPrice;
 
+  bool matchesSearch(String query) {
+    final value = query.trim().toLowerCase();
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    return value.isEmpty ||
+        customerName.toLowerCase().contains(value) ||
+        id.toLowerCase().contains(
+          value.startsWith('#') ? value.substring(1) : value,
+        ) ||
+        phone.toLowerCase().contains(value) ||
+        (digits.isNotEmpty &&
+            RegExp(r'^[+0-9 ()-]+$').hasMatch(value) &&
+            phone.replaceAll(RegExp(r'\D'), '').contains(digits));
+  }
+
   double get totalAmount => quantity * unitPrice;
   String get formattedDate =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';

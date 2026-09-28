@@ -128,10 +128,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               data['image']!,
               fit: BoxFit.contain,
               width: 250,
-              errorBuilder: (context, error, stack) => const Icon(
+              errorBuilder: (context, error, stack) => Icon(
                 Icons.image_outlined,
                 size: 100,
-                color: AppColors.textHint,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -168,7 +168,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           height: 8,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: _currentPage == index ? AppColors.primary : AppColors.border,
+            color: _currentPage == index
+                ? AppColors.primary
+                : Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
       ),

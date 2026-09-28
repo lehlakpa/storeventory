@@ -12,6 +12,8 @@ abstract class InventoryRepository {
   Future<void> remove(String id);
   Future<void> changeStock(String id, int quantity, {bool increment = false});
   Future<bool> addCategory(String name);
+  Future<SaleUiModel> updateSale(SaleUiModel sale);
+  Future<void> deleteSale(String id);
   Future<SaleUiModel> recordSale(
     String id,
     int quantity, {
@@ -26,6 +28,83 @@ class FirestoreInventoryRepository implements InventoryRepository {
   FirestoreInventoryRepository(this.db, this.uid);
   final FirebaseFirestore db;
   final String uid;
+
+  @override
+  Future<SaleUiModel> updateSale(SaleUiModel sale) async {
+    if (sale.quantity <= 0 ||
+        sale.customerName.trim().isEmpty ||
+        sale.address.trim().isEmpty ||
+        sale.phone.trim().isEmpty) {
+      throw StateError('Enter valid customer and sale details.');
+    }
+    final ref = db.collection('sales').doc(sale.id);
+    return db.runTransaction((t) async {
+      final snapshot = await t.get(ref);
+      if (!snapshot.exists) throw StateError('Receipt was deleted.');
+      final current = saleFromMap(ref.id, snapshot.data()!);
+      final productRef = db.collection('products').doc(current.productId);
+      final product = await t.get(productRef);
+      final difference = current.quantity - sale.quantity;
+      if (difference != 0) {
+        if (!product.exists) {
+          throw StateError(
+            'Product no longer available. Quantity cannot be changed.',
+          );
+        }
+        final before = (product.data()!['quantity'] as num).toInt();
+        if (before + difference < 0) {
+          throw StateError('Not enough stock available.');
+        }
+        t.update(productRef, {'quantity': before + difference});
+        _history(
+          t,
+          current.productId,
+          before,
+          before + difference,
+          'sale edited',
+        );
+      }
+      final updated = SaleUiModel(
+        id: current.id,
+        customerName: sale.customerName.trim(),
+        address: sale.address.trim(),
+        phone: sale.phone.trim(),
+        date: current.date,
+        productId: current.productId,
+        productName: current.productName,
+        imageUrl: current.imageUrl,
+        unit: current.unit,
+        quantity: sale.quantity,
+        unitPrice: current.unitPrice,
+      );
+      t.update(ref, saleToMap(updated));
+      return updated;
+    });
+  }
+
+  @override
+  Future<void> deleteSale(String id) async {
+    final ref = db.collection('sales').doc(id);
+    await db.runTransaction((t) async {
+      final snapshot = await t.get(ref);
+      if (!snapshot.exists) return;
+      final sale = saleFromMap(ref.id, snapshot.data()!);
+      final productRef = db.collection('products').doc(sale.productId);
+      final product = await t.get(productRef);
+      if (product.exists) {
+        final before = (product.data()!['quantity'] as num).toInt();
+        t.update(productRef, {'quantity': before + sale.quantity});
+        _history(
+          t,
+          sale.productId,
+          before,
+          before + sale.quantity,
+          'sale deleted',
+        );
+      }
+      t.delete(ref);
+    });
+  }
 
   @override
   Stream<List<ProductUiModel>> watchProducts() => db

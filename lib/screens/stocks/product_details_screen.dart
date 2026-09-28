@@ -34,7 +34,7 @@ class ProductDetailsScreen extends StatelessWidget {
               height: 230,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: ProductImage(url: p.imageUrl),
@@ -54,9 +54,11 @@ class ProductDetailsScreen extends StatelessWidget {
                 StatusBadge(status: p.status),
               ],
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
-              child: Divider(color: AppColors.border),
+              child: Divider(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
             ),
             Row(
               children: [
@@ -92,7 +94,7 @@ class ProductDetailsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: _Info(
@@ -171,7 +173,10 @@ class _Info extends StatelessWidget {
     children: [
       Text(
         title,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontSize: 11,
+        ),
       ),
       const SizedBox(height: 7),
       Text(

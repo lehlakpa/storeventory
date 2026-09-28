@@ -104,6 +104,10 @@ class InventoryCubit extends Cubit<InventoryState> {
     return repository.addCategory(name);
   }
 
+  Future<SaleUiModel> updateSale(SaleUiModel sale) =>
+      repository.updateSale(sale);
+  Future<void> deleteSale(String id) => repository.deleteSale(id);
+
   Future<SaleUiModel> recordSale(
     String id,
     int quantity, {

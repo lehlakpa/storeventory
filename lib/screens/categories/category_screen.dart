@@ -126,8 +126,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   .where((p) => p.category == category)
                   .length;
               return DecoratedBox(
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: AppColors.border)),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(vertical: 5),
@@ -156,15 +160,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   ),
                   subtitle: Text(
                     '$count products',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  trailing: const Icon(
+                  trailing: Icon(
                     Icons.chevron_right,
                     size: 19,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   onTap: () => Navigator.push(
                     context,

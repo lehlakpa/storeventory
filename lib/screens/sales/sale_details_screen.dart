@@ -5,21 +5,93 @@ import '../../core/constants/app_colors.dart';
 import '../../models/sale_ui_model.dart';
 import '../../widgets/product_image.dart';
 
-class SaleDetailsScreen extends StatelessWidget {
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../blocs/inventory_cubit.dart';
+import '../../widgets/run_mutation.dart';
+import 'record_sale_screen.dart';
+
+class SaleDetailsScreen extends StatefulWidget {
   const SaleDetailsScreen({super.key, required this.sale});
   final SaleUiModel sale;
 
   @override
+  State<SaleDetailsScreen> createState() => _SaleDetailsScreenState();
+}
+
+class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
+  late SaleUiModel sale = widget.sale;
+  bool _busy = false;
+
+  Future<void> _edit() async {
+    final updated = await Navigator.push<SaleUiModel>(
+      context,
+      MaterialPageRoute(builder: (_) => RecordSaleScreen(sale: sale)),
+    );
+    if (mounted && updated != null) setState(() => sale = updated);
+  }
+
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete receipt?'),
+        content: const Text(
+          'This will permanently delete the receipt and restore its quantity to stock if the product still exists.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _busy = true);
+    final success = await runMutation(context, () async {
+      await context.read<InventoryCubit>().deleteSale(sale.id);
+      return true;
+    });
+    if (!mounted) return;
+    if (success == true) {
+      Navigator.pop(context);
+    } else {
+      setState(() => _busy = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text('Receipt #${sale.id}')),
+    appBar: AppBar(
+      title: Text('Receipt #${sale.id}'),
+      actions: [
+        IconButton(
+          tooltip: 'Edit receipt',
+          onPressed: _busy ? null : _edit,
+          icon: const Icon(Icons.edit_outlined),
+        ),
+        IconButton(
+          tooltip: 'Delete receipt',
+          onPressed: _busy ? null : _delete,
+          icon: const Icon(Icons.delete_outline),
+        ),
+      ],
+    ),
     body: ListView(
       padding: const EdgeInsets.all(18),
       children: [
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.border),
+            color: Theme.of(context).colorScheme.surface,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
@@ -41,25 +113,28 @@ class SaleDetailsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'SALES RECEIPT',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   letterSpacing: 2,
                   fontSize: 11,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 22),
               _line('Receipt number', '#${sale.id}'),
               const SizedBox(height: 10),
               _line('Date', sale.formattedDate),
-              const Divider(height: 32, color: AppColors.border),
-              const Text(
+              Divider(
+                height: 32,
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+              Text(
                 'BILL TO',
                 style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -74,14 +149,21 @@ class SaleDetailsScreen extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 sale.address,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 sale.phone,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
-              const Divider(height: 32, color: AppColors.border),
+              Divider(
+                height: 32,
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -105,8 +187,10 @@ class SaleDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           '${sale.quantity} ${sale.unit} x Ns ${sale.unitPrice.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
                             fontSize: 12,
                           ),
                         ),
@@ -117,11 +201,14 @@ class SaleDetailsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               _line('Subtotal', 'Ns ${sale.totalAmount.toStringAsFixed(2)}'),
-              const Divider(height: 28, color: AppColors.border),
+              Divider(
+                height: 28,
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.lightBlue,
+                  color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: _line(
@@ -131,10 +218,13 @@ class SaleDetailsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Thank you for your purchase!',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -161,7 +251,9 @@ class SaleDetailsScreen extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: bold ? AppColors.textPrimary : AppColors.textSecondary,
+            color: bold
+                ? Theme.of(context).colorScheme.onSurface
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
             fontSize: 12,
           ),

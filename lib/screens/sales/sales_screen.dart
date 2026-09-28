@@ -9,14 +9,23 @@ import '../../widgets/inventory_builder.dart';
 import 'record_sale_screen.dart';
 import 'sale_details_screen.dart';
 
-class SalesScreen extends StatelessWidget {
+class SalesScreen extends StatefulWidget {
   const SalesScreen({super.key});
+  @override
+  State<SalesScreen> createState() => _SalesScreenState();
+}
+
+class _SalesScreenState extends State<SalesScreen> {
+  String _query = '';
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Sales')),
     body: InventoryBuilder(
       builder: (context, _) {
         final sales = context.read<InventoryCubit>().sales.reversed.toList();
+        final filtered = sales
+            .where((sale) => sale.matchesSearch(_query))
+            .toList();
         final total = sales.fold<double>(
           0,
           (sum, sale) => sum + sale.totalAmount,
@@ -52,18 +61,32 @@ class SalesScreen extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(height: 12),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Search by name or number',
+                hintText: 'Customer name, phone or receipt number',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) => setState(() => _query = value),
+            ),
+            const SizedBox(height: 12),
+            if (filtered.isEmpty && sales.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text('No matching receipts found.'),
+              ),
             if (sales.isEmpty)
               Container(
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Column(
+                child: Column(
                   children: [
                     Icon(
                       Icons.receipt_long_outlined,
-                      color: AppColors.textHint,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       size: 38,
                     ),
                     SizedBox(height: 12),
@@ -73,18 +96,20 @@ class SalesScreen extends StatelessWidget {
                       'Record a sale to create your first receipt.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
-            ...sales.map(
+            ...filtered.map(
               (sale) => Container(
                 margin: const EdgeInsets.only(bottom: 9),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: ListTile(
@@ -92,8 +117,10 @@ class SalesScreen extends StatelessWidget {
                     horizontal: 12,
                     vertical: 8,
                   ),
-                  leading: const CircleAvatar(
-                    backgroundColor: AppColors.lightBlue,
+                  leading: CircleAvatar(
+                    backgroundColor: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer,
                     child: Icon(
                       Icons.receipt_long_outlined,
                       color: AppColors.primary,
@@ -113,9 +140,11 @@ class SalesScreen extends StatelessWidget {
                       children: [
                         Text(
                           sale.formattedDate,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.textSecondary,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 5),
@@ -148,7 +177,9 @@ class SalesScreen extends StatelessWidget {
   Widget _summary(String label, String value, bool primary) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: primary ? AppColors.primary : AppColors.surface,
+      color: primary
+          ? AppColors.primary
+          : Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(12),
     ),
     child: Column(
@@ -158,7 +189,9 @@ class SalesScreen extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 11,
-            color: primary ? Colors.white : AppColors.textSecondary,
+            color: primary
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 9),
@@ -169,7 +202,9 @@ class SalesScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: primary ? Colors.white : AppColors.textPrimary,
+              color: primary
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),

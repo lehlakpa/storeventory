@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'blocs/auth_bloc.dart';
+import 'blocs/theme_cubit.dart';
 import 'blocs/inventory_cubit.dart';
 import 'data/auth_repository.dart';
 import 'data/inventory_repository.dart';
@@ -32,6 +33,13 @@ class _AppState extends State<App> {
   late bool _seen = widget.hasSeenOnboarding;
   @override
   Widget build(BuildContext context) => BlocProvider(
+    create: (_) => ThemeCubit(),
+    child: BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, mode) => _buildApp(mode),
+    ),
+  );
+
+  Widget _buildApp(ThemeMode mode) => BlocProvider(
     create: (_) => AuthBloc(
       widget.authRepository ??
           FirebaseAuthRepository(
@@ -48,6 +56,8 @@ class _AppState extends State<App> {
           key: ValueKey(uid ?? 'signed-out'),
           title: 'Storeventory',
           theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: mode,
           debugShowCheckedModeBanner: false,
           home: state.initializing
               ? const Scaffold(body: CustomLoading())

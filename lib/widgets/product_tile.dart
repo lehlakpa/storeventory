@@ -29,10 +29,10 @@ class ProductTile extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 7),
     child: Material(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -44,7 +44,7 @@ class ProductTile extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: ColoredBox(
-                  color: AppColors.surface,
+                  color: Theme.of(context).colorScheme.surface,
                   child: ProductImage(
                     url: image,
                     width: 54,
@@ -68,9 +68,9 @@ class ProductTile extends StatelessWidget {
                     const SizedBox(height: 5),
                     Text(
                       'Qty: $quantity',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     if (onUpdateStock != null || onDeleteStock != null) ...[
@@ -86,9 +86,9 @@ class ProductTile extends StatelessWidget {
               else
                 PopupMenuButton<String>(
                   tooltip: 'Stock options for $name',
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_vert,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   onSelected: (action) {
                     if (action == 'update') onUpdateStock?.call();

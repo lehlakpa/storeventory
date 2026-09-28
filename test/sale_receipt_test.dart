@@ -3,8 +3,81 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:storeventory/data/inventory_repository.dart';
 import 'package:storeventory/data/firestore_codec.dart';
 import 'package:storeventory/models/product_ui_model.dart';
+import 'package:storeventory/models/sale_ui_model.dart';
 
 void main() {
+  test(
+    'editing and deleting receipts reconciles stock and preserves pricing',
+    () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreInventoryRepository(db, 'admin');
+      await repo.save(
+        const ProductUiModel(
+          id: 'p',
+          name: 'Test',
+          imageUrl: '',
+          price: 80,
+          quantity: 5,
+          category: 'Test',
+        ),
+      );
+      final original = await repo.recordSale(
+        'p',
+        2,
+        customerName: 'Alice',
+        address: 'Home',
+        phone: '+977 980-000-0000',
+        date: DateTime(2026, 9, 28),
+      );
+      SaleUiModel change(int quantity) => SaleUiModel(
+        id: original.id,
+        customerName: ' Bob ',
+        address: ' New address ',
+        phone: '9800000001',
+        date: DateTime.now(),
+        productId: 'ignored',
+        productName: 'ignored',
+        imageUrl: '',
+        unit: 'ignored',
+        quantity: quantity,
+        unitPrice: 999,
+      );
+      final updated = await repo.updateSale(change(4));
+      expect(updated.customerName, 'Bob');
+      expect(updated.totalAmount, 320);
+      expect(updated.date, original.date);
+      expect(updated.productId, 'p');
+      expect(
+        (await db.collection('products').doc('p').get()).data()!['quantity'],
+        1,
+      );
+      await expectLater(repo.updateSale(change(6)), throwsStateError);
+      expect(
+        (await db.collection('sales').doc(original.id).get())
+            .data()!['quantity'],
+        4,
+      );
+      await repo.updateSale(change(1));
+      expect(
+        (await db.collection('products').doc('p').get()).data()!['quantity'],
+        4,
+      );
+      await repo.deleteSale(original.id);
+      await repo.deleteSale(original.id);
+      expect((await db.collection('sales').get()).docs, isEmpty);
+      expect(
+        (await db.collection('products').doc('p').get()).data()!['quantity'],
+        5,
+      );
+      expect((await db.collection('stock_history').get()).docs.length, 5);
+      await expectLater(repo.updateSale(change(1)), throwsStateError);
+      expect(original.matchesSearch(' ALICE '), isTrue);
+      expect(original.matchesSearch('9800000000'), isTrue);
+      expect(original.matchesSearch('#${original.id}'), isTrue);
+      expect(original.matchesSearch('missing'), isFalse);
+    },
+  );
+
   test(
     'sale persists a receipt, decreases stock and appends immutable history',
     () async {

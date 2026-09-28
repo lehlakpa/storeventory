@@ -18,14 +18,16 @@ class CustomBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 72,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
       ),
       child: Row(
         children: [
-          _item(0, Icons.home_outlined, 'Home'),
-          _item(1, Icons.inventory_2_outlined, 'Stocks'),
+          _item(context, 0, Icons.home_outlined, 'Home'),
+          _item(context, 1, Icons.inventory_2_outlined, 'Stocks'),
 
           Expanded(
             child: Center(
@@ -51,14 +53,14 @@ class CustomBottomNavBar extends StatelessWidget {
             ),
           ),
 
-          _item(2, Icons.bar_chart_outlined, 'Sales'),
-          _item(3, Icons.settings_outlined, 'Settings'),
+          _item(context, 2, Icons.bar_chart_outlined, 'Sales'),
+          _item(context, 3, Icons.settings_outlined, 'Settings'),
         ],
       ),
     );
   }
 
-  Widget _item(int index, IconData icon, String label) {
+  Widget _item(BuildContext context, int index, IconData icon, String label) {
     final selected = currentIndex == index;
 
     return Expanded(
@@ -70,14 +72,18 @@ class CustomBottomNavBar extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: selected ? AppColors.primary : AppColors.textSecondary,
+              color: selected
+                  ? AppColors.primary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 3),
             Text(
               label,
               style: TextStyle(
                 fontSize: 10,
-                color: selected ? AppColors.primary : AppColors.textSecondary,
+                color: selected
+                    ? AppColors.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),

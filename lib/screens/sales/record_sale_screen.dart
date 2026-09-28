@@ -9,9 +9,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../widgets/run_mutation.dart';
 import 'sale_details_screen.dart';
+import '../../models/sale_ui_model.dart';
 
 class RecordSaleScreen extends StatefulWidget {
-  const RecordSaleScreen({super.key, this.initialProductId});
+  const RecordSaleScreen({super.key, this.initialProductId, this.sale});
+  final SaleUiModel? sale;
   final String? initialProductId;
   @override
   State<RecordSaleScreen> createState() => _RecordSaleScreenState();
@@ -28,7 +30,16 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
   @override
   void initState() {
     super.initState();
-    _date = DateTime.now();
+    _date = widget.sale?.date ?? DateTime.now();
+    final sale = widget.sale;
+    if (sale != null) {
+      _productId = sale.productId;
+      _name = sale.customerName;
+      _address = sale.address;
+      _phone = sale.phone;
+      _quantity = sale.quantity;
+      return;
+    }
     final product = context.read<InventoryCubit>().product(
       widget.initialProductId ?? '',
     );
@@ -41,18 +52,38 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
     setState(() => _saving = true);
     final sale = await runMutation(
       context,
-      () => context.read<InventoryCubit>().recordSale(
-        _productId!,
-        _quantity,
-        customerName: _name,
-        address: _address,
-        phone: _phone,
-        date: _date,
-      ),
+      () => widget.sale != null
+          ? context.read<InventoryCubit>().updateSale(
+              SaleUiModel(
+                id: widget.sale!.id,
+                customerName: _name,
+                address: _address,
+                phone: _phone,
+                date: _date,
+                productId: widget.sale!.productId,
+                productName: widget.sale!.productName,
+                imageUrl: widget.sale!.imageUrl,
+                unit: widget.sale!.unit,
+                quantity: _quantity,
+                unitPrice: widget.sale!.unitPrice,
+              ),
+            )
+          : context.read<InventoryCubit>().recordSale(
+              _productId!,
+              _quantity,
+              customerName: _name,
+              address: _address,
+              phone: _phone,
+              date: _date,
+            ),
     );
     if (!mounted) return;
     if (sale == null) {
       setState(() => _saving = false);
+      return;
+    }
+    if (widget.sale != null) {
+      Navigator.pop(context, sale);
       return;
     }
     Navigator.pushReplacement(
@@ -66,9 +97,11 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
     required IconData icon,
     required FormFieldSetter<String> onSaved,
     TextInputType? keyboardType,
+    String? initialValue,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 14),
     child: TextFormField(
+      initialValue: initialValue,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
@@ -102,7 +135,9 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
     final dateText =
         '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
     return Scaffold(
-      appBar: AppBar(title: const Text('Record Sale')),
+      appBar: AppBar(
+        title: Text(widget.sale == null ? 'Record Sale' : 'Edit Receipt'),
+      ),
       body: InventoryBuilder(
         builder: (context, state) => SingleChildScrollView(
           padding: const EdgeInsets.all(18),
@@ -114,7 +149,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.lightBlue,
+                    color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -130,18 +165,24 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'New receipt',
+                              widget.sale == null
+                                  ? 'New receipt'
+                                  : 'Edit receipt #${widget.sale!.id}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 17,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'Receipt number assigned automatically',
+                            Text(
+                              widget.sale == null
+                                  ? 'Receipt number assigned automatically'
+                                  : 'Receipt number and original price are preserved',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -158,17 +199,20 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                 const SizedBox(height: 14),
                 _customerField(
                   label: 'Customer name',
+                  initialValue: _name,
                   icon: Icons.person_outline,
                   onSaved: (v) => _name = v!.trim(),
                 ),
                 _customerField(
                   label: 'Address',
+                  initialValue: _address,
                   icon: Icons.location_on_outlined,
                   onSaved: (v) => _address = v!.trim(),
                   keyboardType: TextInputType.streetAddress,
                 ),
                 _customerField(
                   label: 'Phone number',
+                  initialValue: _phone,
                   icon: Icons.phone_outlined,
                   onSaved: (v) => _phone = v!.trim(),
                   keyboardType: TextInputType.phone,
@@ -186,35 +230,43 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 14),
-                DropdownButtonFormField<String>(
-                  initialValue: products.any((p) => p.id == _productId)
-                      ? _productId
-                      : null,
-                  key: ValueKey(
-                    products.any((p) => p.id == _productId) ? _productId : null,
-                  ),
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Product',
-                    prefixIcon: Icon(Icons.inventory_2_outlined, size: 20),
-                  ),
-                  items: products
-                      .map(
-                        (p) => DropdownMenuItem(
-                          value: p.id,
-                          child: Text(
-                            '${p.name} (${p.quantity} available)',
-                            overflow: TextOverflow.ellipsis,
+                if (widget.sale != null)
+                  InputDecorator(
+                    decoration: const InputDecoration(labelText: 'Product'),
+                    child: Text(widget.sale!.productName),
+                  )
+                else
+                  DropdownButtonFormField<String>(
+                    initialValue: products.any((p) => p.id == _productId)
+                        ? _productId
+                        : null,
+                    key: ValueKey(
+                      products.any((p) => p.id == _productId)
+                          ? _productId
+                          : null,
+                    ),
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Product',
+                      prefixIcon: Icon(Icons.inventory_2_outlined, size: 20),
+                    ),
+                    items: products
+                        .map(
+                          (p) => DropdownMenuItem(
+                            value: p.id,
+                            child: Text(
+                              '${p.name} (${p.quantity} available)',
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (id) => setState(() => _productId = id),
-                  validator: (id) => id == null ? 'Select a product' : null,
-                ),
+                        )
+                        .toList(),
+                    onChanged: (id) => setState(() => _productId = id),
+                    validator: (id) => id == null ? 'Select a product' : null,
+                  ),
                 const SizedBox(height: 16),
                 TextFormField(
-                  initialValue: '1',
+                  initialValue: _quantity.toString(),
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Quantity',
@@ -228,7 +280,9 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     if (count == null || count <= 0) {
                       return 'Enter a positive whole number';
                     }
-                    if (selected != null && count > selected.quantity) {
+                    if (selected != null &&
+                        count >
+                            selected.quantity + (widget.sale?.quantity ?? 0)) {
                       return 'Not enough stock available';
                     }
                     return null;
@@ -238,11 +292,11 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Total: Ns ${((selected?.price ?? 0) * (_quantity > 0 ? _quantity : 0)).toStringAsFixed(2)}',
+                    'Total: Ns ${((widget.sale?.unitPrice ?? selected?.price ?? 0) * (_quantity > 0 ? _quantity : 0)).toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontSize: 21,
                       fontWeight: FontWeight.w700,
@@ -251,18 +305,25 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: products.isEmpty || _saving ? null : _save,
-                  child: const Text('Save Sale'),
+                  onPressed:
+                      (products.isEmpty && widget.sale == null) || _saving
+                      ? null
+                      : _save,
+                  child: Text(
+                    widget.sale == null ? 'Save Sale' : 'Save Changes',
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  products.isEmpty
+                  widget.sale != null
+                      ? 'Saving updates the receipt and adjusts stock.'
+                      : products.isEmpty
                       ? 'Add stock before recording a sale.'
                       : 'Saving updates stock and creates your receipt.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 12),

@@ -11,7 +11,7 @@ import '../../models/product_ui_model.dart';
 import '../../widgets/product_image.dart';
 import '../sales/record_sale_screen.dart';
 import '../sales/sales_screen.dart';
-import '../settings/settings_screen.dart';
+import '../settings/profile_screen.dart';
 import '../stocks/add_product_screen.dart';
 import '../stocks/stock_screen.dart';
 
@@ -95,11 +95,11 @@ class HomeScreen extends StatelessWidget {
             onOpenProfile ??
             () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
             ),
-        icon: const CircleAvatar(
+        icon: CircleAvatar(
           radius: 17,
-          backgroundColor: AppColors.lightBlue,
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           child: Icon(Icons.person_outline, color: AppColors.primary, size: 22),
         ),
       ),
@@ -250,6 +250,7 @@ class HomeScreen extends StatelessWidget {
               ),
               if (out.isEmpty)
                 _empty(
+                  context,
                   store.products.isEmpty
                       ? 'No products yet. Add your first product.'
                       : 'All products are in stock.',
@@ -271,20 +272,23 @@ class HomeScreen extends StatelessWidget {
     ),
   );
 
-  Widget _empty(String text) => Container(
+  Widget _empty(BuildContext context, String text) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(10),
     ),
-    child: Text(text, style: const TextStyle(color: AppColors.textSecondary)),
+    child: Text(
+      text,
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+    ),
   );
 
   Widget _stockRow(BuildContext context, ProductUiModel p) => Container(
     margin: const EdgeInsets.only(bottom: 7),
     padding: const EdgeInsets.all(8),
     decoration: BoxDecoration(
-      border: Border.all(color: AppColors.border),
+      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       borderRadius: BorderRadius.circular(10),
     ),
     child: Row(
@@ -292,7 +296,7 @@ class HomeScreen extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(7),
           child: ColoredBox(
-            color: AppColors.surface,
+            color: Theme.of(context).colorScheme.surface,
             child: ProductImage(
               url: p.imageUrl,
               width: 48,
@@ -377,8 +381,8 @@ class _QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) => OutlinedButton(
     style: OutlinedButton.styleFrom(
-      foregroundColor: AppColors.textPrimary,
-      side: const BorderSide(color: AppColors.border),
+      foregroundColor: Theme.of(context).colorScheme.onSurface,
+      side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
     ),

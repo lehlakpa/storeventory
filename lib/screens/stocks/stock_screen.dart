@@ -146,12 +146,14 @@ class _StockScreenState extends State<StockScreen> {
           ),
         ],
         bottom: widget.category == null
-            ? const TabBar(
+            ? TabBar(
                 indicatorColor: AppColors.primary,
                 indicatorSize: TabBarIndicatorSize.tab,
                 labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
-                dividerColor: AppColors.border,
+                unselectedLabelColor: Theme.of(context)
+                    .colorScheme
+                    .onSurfaceVariant,
+                dividerColor: Theme.of(context).colorScheme.outlineVariant,
                 labelStyle: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -211,9 +213,9 @@ class _StockScreenState extends State<StockScreen> {
                 const SizedBox(height: 18),
                 Text(
                   'Total Products: ${products.length}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 12),

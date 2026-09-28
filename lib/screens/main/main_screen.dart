@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import '../home/home_screen.dart';
 import '../sales/sales_screen.dart';
 import '../settings/settings_screen.dart';
+import '../settings/profile_screen.dart';
 import '../stocks/add_product_screen.dart';
 import '../stocks/stock_screen.dart';
 
@@ -22,7 +22,10 @@ class _MainScreenState extends State<MainScreen> {
     HomeScreen(
       onViewInventory: () => setState(() => currentIndex = 1),
       onViewSales: () => setState(() => currentIndex = 2),
-      onOpenProfile: () => setState(() => currentIndex = 3),
+      onOpenProfile: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+      ),
     ),
     const StockScreen(),
     const SalesScreen(),
@@ -32,7 +35,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: IndexedStack(index: currentIndex, children: pages),
       bottomNavigationBar: SafeArea(
         top: false,

@@ -7,10 +7,93 @@ import 'package:storeventory/data/inventory_repository.dart';
 import 'package:storeventory/screens/auth/login_screen.dart';
 import 'package:storeventory/screens/main/main_screen.dart';
 import 'package:storeventory/widgets/custom_bottom_nav_bar.dart';
+import 'package:storeventory/screens/settings/profile_screen.dart';
+import 'package:storeventory/screens/settings/about_screen.dart';
 
 import 'support/test_auth_repository.dart';
 
 void main() {
+  testWidgets('profile, about and persistent appearance settings', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final auth = TestAuthRepository()..currentUid = 'test-user';
+    final repo = FirestoreInventoryRepository(
+      FakeFirebaseFirestore(),
+      'test-user',
+    );
+    await tester.pumpWidget(
+      App(authRepository: auth, inventoryRepository: repo),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Profile'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ProfileScreen), findsOneWidget);
+    expect(find.text('test@example.com'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(CustomBottomNavBar),
+        matching: find.text('Settings'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dark mode'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+      ThemeMode.dark,
+    );
+    expect(
+      Theme.of(tester.element(find.text('Appearance'))).brightness,
+      Brightness.dark,
+    );
+    expect(
+      (await SharedPreferences.getInstance()).getString('theme_mode'),
+      'dark',
+    );
+    await tester.tap(find.text('About Storeventory'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AboutScreen), findsOneWidget);
+    expect(find.text('Version 1.0.0'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Test User'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ProfileScreen), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      App(authRepository: auth, inventoryRepository: repo),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+      ThemeMode.dark,
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byType(CustomBottomNavBar),
+        matching: find.text('Settings'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Light mode'));
+    await tester.pumpAndSettle();
+    expect(
+      Theme.of(tester.element(find.text('Appearance'))).brightness,
+      Brightness.light,
+    );
+    expect(
+      (await SharedPreferences.getInstance()).getString('theme_mode'),
+      'light',
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    await auth.changes.close();
+  });
+
   testWidgets('onboarding, validated auth, empty data and logout', (
     tester,
   ) async {

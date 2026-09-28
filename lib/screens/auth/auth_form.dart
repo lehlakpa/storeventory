@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../blocs/auth_bloc.dart';
 import '../../core/constants/app_assets.dart';
 import '../../widgets/custom_loading.dart';
-import 'register_screen.dart';
 
 class AuthForm extends StatefulWidget {
   const AuthForm({super.key, this.register = false});
@@ -160,36 +159,6 @@ class _AuthFormState extends State<AuthForm> {
                                 widget.register ? 'Sign Up' : 'Login',
                               ),
                             ),
-                            if (!widget.register) ...[
-                              TextButton(
-                                onPressed: () {
-                                  if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                                      .hasMatch(_email.text.trim())) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Enter your email address first.',
-                                        ),
-                                      ),
-                                    );
-                                    return;
-                                  }
-                                  context.read<AuthBloc>().add(
-                                    PasswordResetRequested(_email.text),
-                                  );
-                                },
-                                child: const Text('Forgot password?'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const RegisterScreen(),
-                                  ),
-                                ),
-                                child: const Text('Create Account'),
-                              ),
-                            ],
                           ],
                         ),
                       ),

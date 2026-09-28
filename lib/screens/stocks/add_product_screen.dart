@@ -150,7 +150,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           padding: const EdgeInsets.all(18),
           children: [
             Material(
-              color: AppColors.lightBlue,
+              color: Theme.of(context).colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(14),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
@@ -167,7 +167,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           ],
                         )
                       : _image.isEmpty
-                      ? const Column(
+                      ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
@@ -180,7 +180,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               'Add Product Image',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                               ),
                             ),
                           ],
