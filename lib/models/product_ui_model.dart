@@ -11,6 +11,7 @@ class ProductUiModel {
   final int minimumStock;
   final String category;
   final String unit;
+  final String note;
 
   const ProductUiModel({
     required this.id,
@@ -26,6 +27,7 @@ class ProductUiModel {
     this.purchasePrice = 0,
     this.minimumStock = 0,
     this.unit = 'pieces',
+    this.note = '',
   });
 
   String get status => quantity == 0
@@ -47,5 +49,6 @@ class ProductUiModel {
     purchasePrice: purchasePrice,
     minimumStock: minimumStock,
     unit: unit,
+    note: note,
   );
 }

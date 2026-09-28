@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_sizes.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../blocs/inventory_cubit.dart';
 
@@ -86,7 +88,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             .where((c) => c.toLowerCase().contains(_query.toLowerCase()))
             .toList();
         return ListView(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
+          padding: AppSizes.screenPadding,
           children: [
             if (widget.embedded)
               Row(
@@ -114,10 +116,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 prefixIcon: Icon(Icons.search, size: 21),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSizes.md),
             if (categories.isEmpty)
               const Padding(
-                padding: EdgeInsets.all(32),
+                padding: EdgeInsets.all(AppSizes.xl),
                 child: Center(child: Text('No categories found')),
               ),
             ...categories.map((category) {
@@ -134,7 +136,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   ),
                 ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(vertical: 5),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: AppSizes.xs,
+                  ),
                   leading: Container(
                     width: 48,
                     height: 48,

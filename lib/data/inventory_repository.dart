@@ -10,7 +10,12 @@ abstract class InventoryRepository {
   Stream<List<SaleUiModel>> watchSales();
   Future<void> save(ProductUiModel product, {ProductUiModel? previous});
   Future<void> remove(String id);
-  Future<void> changeStock(String id, int quantity, {bool increment = false});
+  Future<void> changeStock(
+    String id,
+    int quantity, {
+    bool increment = false,
+    String? note,
+  });
   Future<bool> addCategory(String name);
   Future<SaleUiModel> updateSale(SaleUiModel sale);
   Future<void> deleteSale(String id);
@@ -182,6 +187,7 @@ class FirestoreInventoryRepository implements InventoryRepository {
     String id,
     int quantity, {
     bool increment = false,
+    String? note,
   }) async {
     if (quantity < 0) throw StateError('Quantity cannot be negative.');
     final ref = db.collection('products').doc(id);
@@ -190,7 +196,7 @@ class FirestoreInventoryRepository implements InventoryRepository {
       if (!s.exists) throw StateError('Product no longer available.');
       final before = (s.data()!['quantity'] as num).toInt();
       final after = increment ? before + quantity : quantity;
-      t.update(ref, {'quantity': after});
+      t.update(ref, {'quantity': after, if (note != null) 'note': note.trim()});
       _history(t, id, before, after, increment ? 'restocked' : 'adjusted');
     });
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_sizes.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../blocs/inventory_cubit.dart';
 
@@ -7,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../widgets/inventory_builder.dart';
 import '../../widgets/run_mutation.dart';
+import '../../widgets/update_stock_dialog.dart';
 import '../../models/product_ui_model.dart';
 import '../../widgets/product_tile.dart';
 import '../categories/category_screen.dart';
@@ -21,83 +24,17 @@ class StockScreen extends StatefulWidget {
 }
 
 class _StockScreenState extends State<StockScreen> {
-  bool _searching = false;
+  final _searchController = TextEditingController();
   String _query = '';
 
-  Future<void> _updateStock(ProductUiModel product) async {
-    final formKey = GlobalKey<FormState>();
-    int quantity = product.quantity;
-    final result = await showDialog<int>(
-      context: context,
-      builder: (dialogContext) {
-        void save() {
-          if (!formKey.currentState!.validate()) return;
-          formKey.currentState!.save();
-          Navigator.pop(dialogContext, quantity);
-        }
-
-        return AlertDialog(
-          title: const Text('Update Stock'),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                Text('Current stock: ${product.quantity} ${product.unit}'),
-                const SizedBox(height: 20),
-                TextFormField(
-                  initialValue: '${product.quantity}',
-                  autofocus: true,
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
-                    labelText: 'New stock quantity',
-                    helperText: 'Replaces the current quantity.',
-                  ),
-                  validator: (value) {
-                    final parsed = int.tryParse(value?.trim() ?? '');
-                    return parsed == null || parsed < 0
-                        ? 'Enter a whole number of 0 or more'
-                        : null;
-                  },
-                  onSaved: (value) => quantity = int.parse(value!.trim()),
-                  onFieldSubmitted: (_) => save(),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(onPressed: save, child: const Text('Update Stock')),
-          ],
-        );
-      },
-    );
-    if (!mounted || result == null) return;
-    final current = context.read<InventoryCubit>().product(product.id);
-    if (current == null) return;
-    final saved = await runMutation(context, () async {
-      await context.read<InventoryCubit>().changeStock(current.id, result);
-      return true;
-    });
-    if (saved != true || !mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${current.name} stock updated to $result ${current.unit}.',
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
+
+  Future<void> _updateStock(ProductUiModel product) =>
+      showUpdateStockDialog(context, product);
 
   Future<void> _deleteStock(ProductUiModel product) async {
     final confirmed = await showDialog<bool>(
@@ -135,16 +72,6 @@ class _StockScreenState extends State<StockScreen> {
     child: Scaffold(
       appBar: AppBar(
         title: Text(widget.category ?? 'Stocks'),
-        actions: [
-          IconButton(
-            tooltip: 'Search products',
-            onPressed: () => setState(() {
-              _searching = !_searching;
-              _query = '';
-            }),
-            icon: Icon(_searching ? Icons.close : Icons.search),
-          ),
-        ],
         bottom: widget.category == null
             ? TabBar(
                 indicatorColor: AppColors.primary,
@@ -181,26 +108,45 @@ class _StockScreenState extends State<StockScreen> {
           .where(
             (p) =>
                 (widget.category == null || p.category == widget.category) &&
-                p.name.toLowerCase().contains(_query.toLowerCase()),
+                p.name.toLowerCase().contains(_query.trim().toLowerCase()),
           )
           .toList();
       return Column(
         children: [
-          if (_searching)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
-              child: TextField(
-                autofocus: true,
-                onChanged: (value) => setState(() => _query = value),
-                decoration: const InputDecoration(
-                  hintText: 'Search products...',
-                  prefixIcon: Icon(Icons.search),
+          Padding(
+            padding: AppSizes.screenHeaderPadding,
+            child: TextField(
+              controller: _searchController,
+              textInputAction: TextInputAction.search,
+              textAlignVertical: TextAlignVertical.center,
+              onChanged: (value) => setState(() => _query = value),
+              onSubmitted: (_) => FocusScope.of(context).unfocus(),
+              onTapOutside: (_) => FocusScope.of(context).unfocus(),
+              decoration: InputDecoration(
+                hintText: 'Search products...',
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.md,
+                  vertical: AppSizes.spacing12,
                 ),
+                prefixIcon: const Icon(Icons.search, size: 22),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Clear search',
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _query = '');
+                        },
+                      ),
               ),
             ),
+          ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: AppSizes.screenPadding,
               children: [
                 ElevatedButton.icon(
                   onPressed: () => Navigator.push(
@@ -210,7 +156,7 @@ class _StockScreenState extends State<StockScreen> {
                   icon: const Icon(Icons.receipt_long_outlined),
                   label: const Text('Record Sale'),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: AppSizes.md),
                 Text(
                   'Total Products: ${products.length}',
                   style: TextStyle(
@@ -218,10 +164,10 @@ class _StockScreenState extends State<StockScreen> {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSizes.spacing12),
                 if (products.isEmpty)
                   const Padding(
-                    padding: EdgeInsets.all(32),
+                    padding: EdgeInsets.all(AppSizes.xl),
                     child: Center(child: Text('No products found')),
                   ),
                 ...products.map(

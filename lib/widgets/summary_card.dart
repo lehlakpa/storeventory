@@ -9,7 +9,7 @@ class SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppSizes.lg),
+      padding: AppSizes.cardPadding,
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(AppSizes.radiusLG),

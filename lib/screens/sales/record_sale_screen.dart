@@ -2,6 +2,8 @@ import '../../widgets/inventory_builder.dart';
 
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_sizes.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../blocs/inventory_cubit.dart';
 
@@ -99,7 +101,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
     TextInputType? keyboardType,
     String? initialValue,
   }) => Padding(
-    padding: const EdgeInsets.only(bottom: 14),
+    padding: const EdgeInsets.only(bottom: AppSizes.md),
     child: TextFormField(
       initialValue: initialValue,
       decoration: InputDecoration(
@@ -140,14 +142,14 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
       ),
       body: InventoryBuilder(
         builder: (context, state) => SingleChildScrollView(
-          padding: const EdgeInsets.all(18),
+          padding: AppSizes.screenPadding,
           child: Form(
             key: _form,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: AppSizes.cardPadding,
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
@@ -159,7 +161,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                         color: AppColors.primary,
                         size: 30,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSizes.spacing12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +175,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                                 fontSize: 17,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppSizes.xs),
                             Text(
                               widget.sale == null
                                   ? 'Receipt number assigned automatically'
@@ -191,12 +193,12 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSizes.lg),
                 const Text(
                   'Customer details',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: AppSizes.md),
                 _customerField(
                   label: 'Customer name',
                   initialValue: _name,
@@ -224,12 +226,12 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                   ),
                   child: Text(dateText),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSizes.lg),
                 const Text(
                   'Sale details',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: AppSizes.md),
                 if (widget.sale != null)
                   InputDecorator(
                     decoration: const InputDecoration(labelText: 'Product'),
@@ -264,7 +266,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     onChanged: (id) => setState(() => _productId = id),
                     validator: (id) => id == null ? 'Select a product' : null,
                   ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSizes.md),
                 TextFormField(
                   initialValue: _quantity.toString(),
                   keyboardType: TextInputType.number,
@@ -288,9 +290,9 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSizes.lg),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: AppSizes.cardPadding,
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
@@ -303,7 +305,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSizes.lg),
                 ElevatedButton(
                   onPressed:
                       (products.isEmpty && widget.sale == null) || _saving
@@ -313,7 +315,7 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     widget.sale == null ? 'Save Sale' : 'Save Changes',
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSizes.spacing12),
                 Text(
                   widget.sale != null
                       ? 'Saving updates the receipt and adjusts stock.'
@@ -326,7 +328,6 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 12),
               ],
             ),
           ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants/app_sizes.dart';
+
 import '../core/constants/app_colors.dart';
 import 'product_image.dart';
 import 'status_badge.dart';
@@ -27,7 +29,7 @@ class ProductTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 7),
+    padding: const EdgeInsets.only(bottom: AppSizes.sm),
     child: Material(
       color: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
@@ -38,7 +40,7 @@ class ProductTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(9),
+          padding: AppSizes.tilePadding,
           child: Row(
             children: [
               ClipRRect(
@@ -53,7 +55,7 @@ class ProductTile extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.spacing12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +67,7 @@ class ProductTile extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: AppSizes.xs),
                     Text(
                       'Qty: $quantity',
                       style: TextStyle(
@@ -74,13 +76,13 @@ class ProductTile extends StatelessWidget {
                       ),
                     ),
                     if (onUpdateStock != null || onDeleteStock != null) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: AppSizes.sm),
                       StatusBadge(status: status),
                     ],
                   ],
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSizes.sm),
               if (onUpdateStock == null && onDeleteStock == null)
                 StatusBadge(status: status)
               else
@@ -106,7 +108,7 @@ class ProductTile extends StatelessWidget {
                               size: 19,
                               color: AppColors.primary,
                             ),
-                            SizedBox(width: 10),
+                            SizedBox(width: AppSizes.spacing12),
                             Text('Record Sale'),
                           ],
                         ),
@@ -121,7 +123,7 @@ class ProductTile extends StatelessWidget {
                               size: 19,
                               color: AppColors.primary,
                             ),
-                            SizedBox(width: 10),
+                            SizedBox(width: AppSizes.spacing12),
                             Text('Update Stock'),
                           ],
                         ),
@@ -136,7 +138,7 @@ class ProductTile extends StatelessWidget {
                               size: 19,
                               color: AppColors.danger,
                             ),
-                            SizedBox(width: 10),
+                            SizedBox(width: AppSizes.spacing12),
                             Text(
                               'Delete Stock',
                               style: TextStyle(color: AppColors.danger),

@@ -17,6 +17,7 @@ ProductUiModel productFromMap(String id, Map<String, dynamic> d) =>
       minimumStock: (d['minimumStock'] as num? ?? 0).toInt(),
       category: d['category'] as String? ?? '',
       unit: d['unit'] as String? ?? '',
+      note: d['note'] as String? ?? '',
     );
 
 Map<String, dynamic> productToMap(ProductUiModel p) => {
@@ -31,6 +32,7 @@ Map<String, dynamic> productToMap(ProductUiModel p) => {
   'minimumStock': p.minimumStock,
   'category': p.category,
   'unit': p.unit,
+  'note': p.note,
 };
 
 SaleUiModel saleFromMap(String id, Map<String, dynamic> d) => SaleUiModel(

@@ -95,8 +95,12 @@ class InventoryCubit extends Cubit<InventoryState> {
   Future<void> save(ProductUiModel p, {ProductUiModel? previous}) =>
       repository.save(p, previous: previous);
   Future<void> remove(String id) => repository.remove(id);
-  Future<void> changeStock(String id, int value, {bool increment = false}) =>
-      repository.changeStock(id, value, increment: increment);
+  Future<void> changeStock(
+    String id,
+    int value, {
+    bool increment = false,
+    String? note,
+  }) => repository.changeStock(id, value, increment: increment, note: note);
   Future<bool> addCategory(String name) async {
     if (categories.any((c) => c.toLowerCase() == name.trim().toLowerCase())) {
       return false;

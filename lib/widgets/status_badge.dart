@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants/app_sizes.dart';
+
 import '../core/constants/app_colors.dart';
 
 class StatusBadge extends StatelessWidget {
@@ -15,7 +17,10 @@ class StatusBadge extends StatelessWidget {
         ? AppColors.warning
         : AppColors.danger;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.sm,
+        vertical: AppSizes.xs,
+      ),
       decoration: BoxDecoration(
         color: good
             ? AppColors.successBackground
@@ -28,7 +33,7 @@ class StatusBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.inventory_2_outlined, size: 10, color: foreground),
-          const SizedBox(width: 3),
+          const SizedBox(width: AppSizes.xs),
           Text(
             status,
             style: TextStyle(

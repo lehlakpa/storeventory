@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../core/constants/app_sizes.dart';
+
 import 'package:flutter/services.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -67,26 +70,12 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text('Receipt #${sale.id}'),
-      actions: [
-        IconButton(
-          tooltip: 'Edit receipt',
-          onPressed: _busy ? null : _edit,
-          icon: const Icon(Icons.edit_outlined),
-        ),
-        IconButton(
-          tooltip: 'Delete receipt',
-          onPressed: _busy ? null : _delete,
-          icon: const Icon(Icons.delete_outline),
-        ),
-      ],
-    ),
+    appBar: AppBar(title: Text('Receipt #${sale.id}')),
     body: ListView(
-      padding: const EdgeInsets.all(18),
+      padding: AppSizes.screenPadding,
       children: [
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSizes.lg),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             border: Border.all(
@@ -102,7 +91,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                 color: AppColors.primary,
                 size: 40,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSizes.spacing12),
               const Text(
                 'STOREVENTORY',
                 textAlign: TextAlign.center,
@@ -112,7 +101,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                   color: AppColors.primary,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSizes.sm),
               Text(
                 'SALES RECEIPT',
                 textAlign: TextAlign.center,
@@ -122,9 +111,9 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: AppSizes.lg),
               _line('Receipt number', '#${sale.id}'),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSizes.spacing12),
               _line('Date', sale.formattedDate),
               Divider(
                 height: 32,
@@ -138,7 +127,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSizes.spacing12),
               Text(
                 sale.customerName,
                 style: const TextStyle(
@@ -146,14 +135,14 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSizes.sm),
               Text(
                 sale.address,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSizes.sm),
               Text(
                 sale.phone,
                 style: TextStyle(
@@ -175,7 +164,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                       height: 52,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSizes.spacing12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +173,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                           sale.productName,
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppSizes.sm),
                         Text(
                           '${sale.quantity} ${sale.unit} x Ns ${sale.unitPrice.toStringAsFixed(2)}',
                           style: TextStyle(
@@ -199,14 +188,14 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSizes.lg),
               _line('Subtotal', 'Ns ${sale.totalAmount.toStringAsFixed(2)}'),
               Divider(
                 height: 28,
                 color: Theme.of(context).colorScheme.outlineVariant,
               ),
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: AppSizes.cardPadding,
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(9),
@@ -217,7 +206,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
                   bold: true,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSizes.lg),
               Text(
                 'Thank you for your purchase!',
                 textAlign: TextAlign.center,
@@ -229,18 +218,68 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 18),
-        OutlinedButton.icon(
-          onPressed: () async {
-            await Clipboard.setData(ClipboardData(text: sale.receiptText));
-            if (!context.mounted) return;
-            ScaffoldMessenger.of(context)
-                .showSnackBar(const SnackBar(content: Text('Receipt copied.')));
-          },
-          icon: const Icon(Icons.copy_outlined),
-          label: const Text('Copy Receipt'),
+        const SizedBox(height: AppSizes.md),
+        Row(
+          children: [
+            _receiptAction(
+              label: 'Edit',
+              icon: Icons.edit_outlined,
+              flex: 3,
+              onPressed: _edit,
+            ),
+            const SizedBox(width: AppSizes.sm),
+            _receiptAction(
+              label: 'Delete',
+              icon: Icons.delete_outline,
+              flex: 4,
+              color: Theme.of(context).colorScheme.error,
+              onPressed: _delete,
+            ),
+            const SizedBox(width: AppSizes.sm),
+            _receiptAction(
+              label: 'Copy Receipt',
+              icon: Icons.copy_outlined,
+              flex: 6,
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: sale.receiptText));
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Receipt copied.')),
+                );
+              },
+            ),
+          ],
         ),
       ],
+    ),
+  );
+
+  Widget _receiptAction({
+    required String label,
+    required IconData icon,
+    required int flex,
+    required VoidCallback onPressed,
+    Color? color,
+  }) => Expanded(
+    flex: flex,
+    child: OutlinedButton(
+      onPressed: _busy ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm),
+        minimumSize: const Size(0, 48),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18),
+            const SizedBox(width: AppSizes.xs),
+            Text(label, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+      ),
     ),
   );
 
@@ -259,7 +298,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
           ),
         ),
       ),
-      const SizedBox(width: 12),
+      const SizedBox(width: AppSizes.spacing12),
       Flexible(
         flex: 2,
         child: Text(

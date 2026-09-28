@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../core/constants/app_sizes.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../blocs/auth_bloc.dart';
@@ -19,9 +22,10 @@ class SettingsScreen extends StatelessWidget {
         body: state.busy
             ? const CustomLoading(message: 'Signing out...')
             : ListView(
-                padding: const EdgeInsets.all(18),
+                padding: AppSizes.screenPadding,
                 children: [
                   ListTile(
+                    contentPadding: EdgeInsets.zero,
                     leading: const CircleAvatar(
                       child: Icon(Icons.person_outline),
                     ),
@@ -39,7 +43,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const Divider(),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -47,7 +51,7 @@ class SettingsScreen extends StatelessWidget {
                           'Appearance',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSizes.spacing12),
                         BlocBuilder<ThemeCubit, ThemeMode>(
                           builder: (context, mode) =>
                               SegmentedButton<ThemeMode>(
@@ -89,6 +93,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const Divider(),
                   ListTile(
+                    contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.info_outline),
                     title: const Text('About Storeventory'),
                     onTap: () => Navigator.push(
@@ -104,6 +109,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ListTile(
+                    contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.person_add_outlined),
                     title: const Text('Register'),
                     trailing: const Icon(Icons.chevron_right),
@@ -113,6 +119,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   ListTile(
+                    contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.logout),
                     title: const Text('Logout'),
                     onTap: () =>

@@ -76,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             _buildIndicators(),
             const SizedBox(height: AppSizes.xl),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.xl),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -119,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildPage(Map<String, String> data) {
     return Padding(
-      padding: const EdgeInsets.all(AppSizes.xl),
+      padding: AppSizes.screenPadding,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -163,7 +163,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: List.generate(
         _onboardingData.length,
         (index) => Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
+          margin: const EdgeInsets.symmetric(horizontal: AppSizes.xs),
           width: 8,
           height: 8,
           decoration: BoxDecoration(

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../core/constants/app_sizes.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../blocs/auth_bloc.dart';
@@ -13,7 +16,7 @@ class ProfileScreen extends StatelessWidget {
       builder: (context, state) {
         final profile = state.profile;
         return ListView(
-          padding: const EdgeInsets.all(24),
+          padding: AppSizes.screenPadding,
           children: [
             const Center(
               child: CircleAvatar(
@@ -21,16 +24,17 @@ class ProfileScreen extends StatelessWidget {
                 child: Icon(Icons.person_outline, size: 44),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSizes.lg),
             Text(
               profile?.name.isNotEmpty == true ? profile!.name : 'Your profile',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.sm),
             const Text('Store administrator', textAlign: TextAlign.center),
-            const SizedBox(height: 28),
+            const SizedBox(height: AppSizes.lg),
             Card(
+              margin: EdgeInsets.zero,
               child: Column(
                 children: [
                   ListTile(

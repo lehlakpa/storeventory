@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_sizes.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../blocs/inventory_cubit.dart';
 
@@ -31,7 +33,7 @@ class _SalesScreenState extends State<SalesScreen> {
           (sum, sale) => sum + sale.totalAmount,
         );
         return ListView(
-          padding: const EdgeInsets.all(18),
+          padding: AppSizes.screenPadding,
           children: [
             Row(
               children: [
@@ -42,11 +44,11 @@ class _SalesScreenState extends State<SalesScreen> {
                     true,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.spacing12),
                 Expanded(child: _summary('Receipts', '${sales.length}', false)),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSizes.lg),
             ElevatedButton.icon(
               onPressed: () => Navigator.push(
                 context,
@@ -55,12 +57,12 @@ class _SalesScreenState extends State<SalesScreen> {
               icon: const Icon(Icons.add),
               label: const Text('Create Receipt'),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.lg),
             const Text(
               'Sales receipts',
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.spacing12),
             TextField(
               decoration: const InputDecoration(
                 labelText: 'Search by name or number',
@@ -69,15 +71,15 @@ class _SalesScreenState extends State<SalesScreen> {
               ),
               onChanged: (value) => setState(() => _query = value),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.spacing12),
             if (filtered.isEmpty && sales.isNotEmpty)
               const Padding(
-                padding: EdgeInsets.all(24),
+                padding: EdgeInsets.all(AppSizes.lg),
                 child: Text('No matching receipts found.'),
               ),
             if (sales.isEmpty)
               Container(
-                padding: const EdgeInsets.all(28),
+                padding: const EdgeInsets.all(AppSizes.lg),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
@@ -89,9 +91,9 @@ class _SalesScreenState extends State<SalesScreen> {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       size: 38,
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: AppSizes.spacing12),
                     Text('No sales yet'),
-                    SizedBox(height: 6),
+                    SizedBox(height: AppSizes.sm),
                     Text(
                       'Record a sale to create your first receipt.',
                       textAlign: TextAlign.center,
@@ -105,7 +107,7 @@ class _SalesScreenState extends State<SalesScreen> {
               ),
             ...filtered.map(
               (sale) => Container(
-                margin: const EdgeInsets.only(bottom: 9),
+                margin: const EdgeInsets.only(bottom: AppSizes.sm),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: Theme.of(context).colorScheme.outlineVariant,
@@ -114,8 +116,8 @@ class _SalesScreenState extends State<SalesScreen> {
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                    horizontal: AppSizes.spacing12,
+                    vertical: AppSizes.sm,
                   ),
                   leading: CircleAvatar(
                     backgroundColor: Theme.of(context)
@@ -134,7 +136,7 @@ class _SalesScreenState extends State<SalesScreen> {
                     ),
                   ),
                   subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 5),
+                    padding: const EdgeInsets.only(top: AppSizes.xs),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -147,7 +149,7 @@ class _SalesScreenState extends State<SalesScreen> {
                                 .onSurfaceVariant,
                           ),
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: AppSizes.xs),
                         Text(
                           'Ns ${sale.totalAmount.toStringAsFixed(2)}',
                           style: const TextStyle(
@@ -175,7 +177,7 @@ class _SalesScreenState extends State<SalesScreen> {
   );
 
   Widget _summary(String label, String value, bool primary) => Container(
-    padding: const EdgeInsets.all(16),
+    padding: AppSizes.cardPadding,
     decoration: BoxDecoration(
       color: primary
           ? AppColors.primary
@@ -194,7 +196,7 @@ class _SalesScreenState extends State<SalesScreen> {
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: AppSizes.sm),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(

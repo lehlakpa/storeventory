@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_sizes.dart';
+
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
@@ -7,28 +9,29 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('About Storeventory')),
     body: ListView(
-      padding: const EdgeInsets.all(24),
+      padding: AppSizes.screenPadding,
       children: [
         Icon(
           Icons.inventory_2_outlined,
           size: 64,
           color: Theme.of(context).colorScheme.primary,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.md),
         Text(
           'Storeventory',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineMedium,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.sm),
         const Text('Version 1.0.0', textAlign: TextAlign.center),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSizes.lg),
         const Text(
           'Manage your store in one place. Keep track of products, monitor stock levels, and record sales with customer receipts.',
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSizes.lg),
         const Card(
+          margin: EdgeInsets.zero,
           child: Column(
             children: [
               ListTile(
@@ -49,7 +52,7 @@ class AboutScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.md),
         OutlinedButton(
           onPressed: () => showLicensePage(
             context: context,

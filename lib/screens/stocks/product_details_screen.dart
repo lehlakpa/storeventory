@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_sizes.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../blocs/inventory_cubit.dart';
 
@@ -9,6 +11,7 @@ import '../../widgets/inventory_builder.dart';
 import '../../widgets/run_mutation.dart';
 import '../../widgets/product_image.dart';
 import '../../widgets/status_badge.dart';
+import '../../widgets/update_stock_dialog.dart';
 import 'add_product_screen.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
@@ -28,18 +31,18 @@ class ProductDetailsScreen extends StatelessWidget {
       return Scaffold(
         appBar: AppBar(title: const Text('Product Details')),
         body: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+          padding: AppSizes.screenPadding,
           children: [
             Container(
               height: 230,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppSizes.lg),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: ProductImage(url: p.imageUrl),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSizes.lg),
             Row(
               children: [
                 Expanded(
@@ -55,7 +58,7 @@ class ProductDetailsScreen extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: AppSizes.sm),
               child: Divider(
                 color: Theme.of(context).colorScheme.outlineVariant,
               ),
@@ -73,7 +76,7 @@ class ProductDetailsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.lg),
             Row(
               children: [
                 Expanded(
@@ -90,9 +93,9 @@ class ProductDetailsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.lg),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: AppSizes.cardPadding,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
@@ -102,25 +105,53 @@ class ProductDetailsScreen extends StatelessWidget {
                 value: 'Ns ${(p.price * p.quantity).toStringAsFixed(0)}',
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: AppSizes.lg),
+            Container(
+              width: double.infinity,
+              padding: AppSizes.cardPadding,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: _Info(
+                title: 'Note',
+                value: p.note.isEmpty ? 'No note added' : p.note,
+              ),
+            ),
+            const SizedBox(height: AppSizes.lg),
             Row(
               children: [
                 Expanded(
+                  flex: 3,
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.sm,
+                      ),
+                      minimumSize: const Size(0, 48),
+                    ),
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => AddProductScreen(product: p),
                       ),
                     ),
-                    child: const Text('Edit'),
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Edit'),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSizes.sm),
                 Expanded(
+                  flex: 3,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.danger,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.sm,
+                      ),
+                      minimumSize: const Size(0, 48),
                     ),
                     onPressed: () async {
                       final remove = await showDialog<bool>(
@@ -152,7 +183,27 @@ class ProductDetailsScreen extends StatelessWidget {
                         }
                       }
                     },
-                    child: const Text('Delete'),
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Delete'),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.sm),
+                Expanded(
+                  flex: 5,
+                  child: ElevatedButton(
+                    onPressed: () => showUpdateStockDialog(context, p),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.sm,
+                      ),
+                      minimumSize: const Size(0, 48),
+                    ),
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Update Stock'),
+                    ),
                   ),
                 ),
               ],
@@ -178,7 +229,7 @@ class _Info extends StatelessWidget {
           fontSize: 11,
         ),
       ),
-      const SizedBox(height: 7),
+      const SizedBox(height: AppSizes.sm),
       Text(
         value,
         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),

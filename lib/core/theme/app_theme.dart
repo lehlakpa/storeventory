@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../constants/app_sizes.dart';
 
 class AppTheme {
   AppTheme._();
@@ -30,6 +31,8 @@ class AppTheme {
         elevation: 0,
       ),
       elevatedButtonTheme: lightTheme.elevatedButtonTheme,
+      outlinedButtonTheme: lightTheme.outlinedButtonTheme,
+      filledButtonTheme: lightTheme.filledButtonTheme,
       inputDecorationTheme: lightTheme.inputDecorationTheme.copyWith(
         fillColor: scheme.surface,
         hintStyle: TextStyle(color: scheme.onSurfaceVariant),
@@ -87,12 +90,25 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: AppSizes.buttonPadding,
+          minimumSize: const Size(0, 48),
           textStyle: const TextStyle(
             fontFamily: 'Roboto',
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          padding: AppSizes.buttonPadding,
+          minimumSize: const Size(0, 48),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: AppSizes.buttonPadding,
+          minimumSize: const Size(0, 48),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -114,10 +130,7 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.inputFill,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
+        contentPadding: AppSizes.cardPadding,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.border),

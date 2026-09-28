@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../core/constants/app_sizes.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../blocs/auth_bloc.dart';
@@ -51,7 +54,7 @@ class _AuthFormState extends State<AuthForm> {
               ? const CustomLoading(message: 'Please wait…')
               : Center(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
+                    padding: AppSizes.screenPadding,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 420),
                       child: Form(
@@ -64,7 +67,7 @@ class _AuthFormState extends State<AuthForm> {
                               height: 180,
                               fit: BoxFit.contain,
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSizes.lg),
                             Text(
                               widget.register
                                   ? 'Create your account'
@@ -75,7 +78,7 @@ class _AuthFormState extends State<AuthForm> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSizes.lg),
                             if (widget.register) ...[
                               TextFormField(
                                 controller: _name,
@@ -86,7 +89,7 @@ class _AuthFormState extends State<AuthForm> {
                                     ? 'Enter your name'
                                     : null,
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppSizes.md),
                             ],
                             TextFormField(
                               controller: _email,
@@ -103,7 +106,7 @@ class _AuthFormState extends State<AuthForm> {
                                   ? null
                                   : 'Enter a valid email address',
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSizes.md),
                             TextFormField(
                               controller: _password,
                               obscureText: _hide,
@@ -126,7 +129,7 @@ class _AuthFormState extends State<AuthForm> {
                               onFieldSubmitted: (_) => _submit(),
                             ),
                             if (widget.register) ...[
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppSizes.md),
                               TextFormField(
                                 obscureText: _hide,
                                 decoration: const InputDecoration(
@@ -139,7 +142,9 @@ class _AuthFormState extends State<AuthForm> {
                             ],
                             if (state.error != null)
                               Padding(
-                                padding: const EdgeInsets.only(top: 16),
+                                padding: const EdgeInsets.only(
+                                  top: AppSizes.md,
+                                ),
                                 child: Text(
                                   state.error!,
                                   style: TextStyle(
@@ -149,10 +154,12 @@ class _AuthFormState extends State<AuthForm> {
                               ),
                             if (state.message != null)
                               Padding(
-                                padding: const EdgeInsets.only(top: 16),
+                                padding: const EdgeInsets.only(
+                                  top: AppSizes.md,
+                                ),
                                 child: Text(state.message!),
                               ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSizes.lg),
                             ElevatedButton(
                               onPressed: _submit,
                               child: Text(

@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_sizes.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../blocs/inventory_cubit.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../widgets/inventory_builder.dart';
-import '../../widgets/run_mutation.dart';
+import '../../widgets/update_stock_dialog.dart';
 import '../../models/product_ui_model.dart';
 import '../../widgets/product_image.dart';
 import '../sales/record_sale_screen.dart';
 import '../sales/sales_screen.dart';
 import '../settings/profile_screen.dart';
 import '../stocks/add_product_screen.dart';
+import '../stocks/product_details_screen.dart';
 import '../stocks/stock_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -37,53 +40,8 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _restock(BuildContext context, ProductUiModel p) async {
-    int amount = 0;
-    String? error;
-    final result = await showDialog<int>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, update) => AlertDialog(
-          title: Text('Restock ${p.name}'),
-          content: TextField(
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            onChanged: (value) => amount = int.tryParse(value) ?? 0,
-            decoration: InputDecoration(
-              labelText: 'Quantity to add',
-              errorText: error,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (amount <= 0) {
-                  update(() => error = 'Enter a positive whole number');
-                  return;
-                }
-                Navigator.pop(context, amount);
-              },
-              child: const Text('Restock'),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (result != null && context.mounted) {
-      await runMutation(context, () async {
-        await context.read<InventoryCubit>().changeStock(
-          p.id,
-          result,
-          increment: true,
-        );
-        return true;
-      });
-    }
-  }
+  Future<void> _restock(BuildContext context, ProductUiModel p) =>
+      showUpdateStockDialog(context, p, increment: true);
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -117,7 +75,7 @@ class HomeScreen extends StatelessWidget {
             color: AppColors.primary,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSizes.sm),
       ],
     ),
     body: SafeArea(
@@ -129,10 +87,10 @@ class HomeScreen extends StatelessWidget {
               .where((p) => p.quantity > 0 && p.quantity <= p.minimumStock)
               .toList();
           return ListView(
-            padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
+            padding: AppSizes.screenPadding,
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: AppSizes.cardPadding,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
@@ -152,7 +110,7 @@ class HomeScreen extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 25),
+                    const SizedBox(height: AppSizes.lg),
                     Row(
                       children: [
                         Expanded(
@@ -162,11 +120,27 @@ class HomeScreen extends StatelessWidget {
                             value: 'Ns ${store.totalValue.toStringAsFixed(0)}',
                           ),
                         ),
+                        const SizedBox(
+                          height: 44,
+                          child: VerticalDivider(
+                            width: 17,
+                            thickness: 1,
+                            color: Colors.white38,
+                          ),
+                        ),
                         Expanded(
                           flex: 3,
                           child: _SummaryItem(
                             title: 'Total Stock',
                             value: '${store.totalStock}',
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 44,
+                          child: VerticalDivider(
+                            width: 17,
+                            thickness: 1,
+                            color: Colors.white38,
                           ),
                         ),
                         Expanded(
@@ -181,12 +155,12 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: AppSizes.lg),
               const Text(
                 'Quick Actions',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSizes.spacing12),
               Row(
                 children: [
                   Expanded(
@@ -202,7 +176,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 7),
+                  const SizedBox(width: AppSizes.sm),
                   Expanded(
                     flex: 4,
                     child: _QuickAction(
@@ -216,7 +190,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 7),
+                  const SizedBox(width: AppSizes.sm),
                   Expanded(
                     flex: 5,
                     child: _QuickAction(
@@ -227,7 +201,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppSizes.md),
               Row(
                 children: [
                   const Expanded(
@@ -257,12 +231,12 @@ class HomeScreen extends StatelessWidget {
                 ),
               ...out.map((p) => _stockRow(context, p)),
               if (low.isNotEmpty) ...[
-                const SizedBox(height: 22),
+                const SizedBox(height: AppSizes.lg),
                 const Text(
                   'Running low',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSizes.spacing12),
                 ...low.map((p) => _stockRow(context, p)),
               ],
             ],
@@ -273,7 +247,7 @@ class HomeScreen extends StatelessWidget {
   );
 
   Widget _empty(BuildContext context, String text) => Container(
-    padding: const EdgeInsets.all(20),
+    padding: AppSizes.cardPadding,
     decoration: BoxDecoration(
       color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(10),
@@ -285,62 +259,81 @@ class HomeScreen extends StatelessWidget {
   );
 
   Widget _stockRow(BuildContext context, ProductUiModel p) => Container(
-    margin: const EdgeInsets.only(bottom: 7),
-    padding: const EdgeInsets.all(8),
+    margin: const EdgeInsets.only(bottom: AppSizes.sm),
     decoration: BoxDecoration(
       border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       borderRadius: BorderRadius.circular(10),
     ),
-    child: Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(7),
-          child: ColoredBox(
-            color: Theme.of(context).colorScheme.surface,
-            child: ProductImage(
-              url: p.imageUrl,
-              width: 48,
-              height: 54,
-              fit: BoxFit.cover,
-            ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailsScreen(productId: p.id),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: AppSizes.tilePadding,
+          child: Row(
             children: [
-              Text(
-                p.name,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(7),
+                child: ColoredBox(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: ProductImage(
+                    url: p.imageUrl,
+                    width: 48,
+                    height: 54,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-              const SizedBox(height: 5),
-              Text(
-                'QTY: ${p.quantity}',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: p.quantity == 0 ? AppColors.danger : AppColors.warning,
+              const SizedBox(width: AppSizes.spacing12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.xs),
+                    Text(
+                      'QTY: ${p.quantity}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: p.quantity == 0
+                            ? AppColors.danger
+                            : AppColors.warning,
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+              const SizedBox(width: AppSizes.sm),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.spacing12,
+                    vertical: AppSizes.spacing12,
+                  ),
+                  minimumSize: const Size(0, 38),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                onPressed: () => _restock(context, p),
+                child: const Text('Restock', style: TextStyle(fontSize: 11)),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            minimumSize: const Size(0, 38),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-          onPressed: () => _restock(context, p),
-          child: const Text('Restock', style: TextStyle(fontSize: 11)),
-        ),
-      ],
+      ),
     ),
   );
 }
@@ -353,7 +346,7 @@ class _SummaryItem extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(title, style: const TextStyle(color: Colors.white, fontSize: 11)),
-      const SizedBox(height: 7),
+      const SizedBox(height: AppSizes.sm),
       FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(
@@ -383,7 +376,10 @@ class _QuickAction extends StatelessWidget {
     style: OutlinedButton.styleFrom(
       foregroundColor: Theme.of(context).colorScheme.onSurface,
       side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.xs,
+        vertical: AppSizes.spacing12,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
     ),
     onPressed: onTap,
@@ -393,7 +389,7 @@ class _QuickAction extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16),
-          const SizedBox(width: 5),
+          const SizedBox(width: AppSizes.xs),
           Text(label, style: const TextStyle(fontSize: 11)),
         ],
       ),

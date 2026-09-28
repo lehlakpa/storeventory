@@ -1,6 +1,9 @@
 import '../../widgets/inventory_builder.dart';
 
 import 'package:flutter/material.dart';
+
+import '../../core/constants/app_sizes.dart';
+
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/cloudinary_service.dart';
@@ -27,7 +30,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   bool _saving = false;
   bool _uploading = false;
   UploadedImage? _uploadedImage;
-  late String _name, _category, _unit, _image;
+  late String _name, _category, _unit, _image, _note;
   late int _quantity, _minimum;
   late double _purchase, _price;
 
@@ -39,6 +42,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _category = p?.category ?? '';
     _unit = p?.unit ?? 'pieces';
     _image = p?.imageUrl ?? '';
+    _note = p?.note ?? '';
     _quantity = p?.quantity ?? 0;
     _minimum = p?.minimumStock ?? 10;
     _purchase = p?.purchasePrice ?? 0;
@@ -84,6 +88,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           price: _price,
           purchasePrice: _purchase,
           imageUrl: _image,
+          note: _note.trim(),
           imagePublicId:
               _uploadedImage?.publicId ?? widget.product?.imagePublicId ?? '',
           imageFileName:
@@ -108,7 +113,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     bool number = false,
     bool whole = false,
   }) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.only(bottom: AppSizes.md),
     child: TextFormField(
       initialValue: value,
       onSaved: save,
@@ -147,7 +152,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       builder: (context, state) => Form(
         key: _form,
         child: ListView(
-          padding: const EdgeInsets.all(18),
+          padding: AppSizes.screenPadding,
           children: [
             Material(
               color: Theme.of(context).colorScheme.primaryContainer,
@@ -162,7 +167,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             CircularProgressIndicator(),
-                            SizedBox(height: 12),
+                            SizedBox(height: AppSizes.spacing12),
                             Text('Uploading image...'),
                           ],
                         )
@@ -175,7 +180,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               color: AppColors.primary,
                               size: 32,
                             ),
-                            SizedBox(height: 12),
+                            SizedBox(height: AppSizes.spacing12),
                             Text(
                               'Add Product Image',
                               style: TextStyle(
@@ -188,13 +193,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           ],
                         )
                       : Padding(
-                          padding: const EdgeInsets.all(14),
+                          padding: AppSizes.cardPadding,
                           child: ProductImage(url: _image),
                         ),
                 ),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: AppSizes.md),
             _field(
               'Product Name',
               Icons.person_outline,
@@ -202,7 +207,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               (v) => _name = v!,
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSizes.md),
               child: DropdownButtonFormField<String>(
                 initialValue: _category.isEmpty ? null : _category,
                 validator: (v) => v == null || v.isEmpty
@@ -278,14 +283,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
               number: true,
               whole: true,
             ),
-            const SizedBox(height: 10),
+            TextFormField(
+              initialValue: _note,
+              minLines: 3,
+              maxLines: 5,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Note (optional)',
+                hintText: 'Add product or stock details',
+                alignLabelWithHint: true,
+              ),
+              onSaved: (value) => _note = value ?? '',
+            ),
+            const SizedBox(height: AppSizes.lg),
             ElevatedButton(
               onPressed: _saving || _uploading ? null : _save,
               child: Text(
                 widget.product == null ? 'Save Product' : 'Save Changes',
               ),
             ),
-            const SizedBox(height: 12),
           ],
         ),
       ),
