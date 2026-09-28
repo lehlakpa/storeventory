@@ -1,6 +1,9 @@
 import '../../widgets/inventory_builder.dart';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../data/cloudinary_service.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../blocs/inventory_cubit.dart';
@@ -22,6 +25,8 @@ class AddProductScreen extends StatefulWidget {
 class _AddProductScreenState extends State<AddProductScreen> {
   final _form = GlobalKey<FormState>();
   bool _saving = false;
+  bool _uploading = false;
+  UploadedImage? _uploadedImage;
   late String _name, _category, _unit, _image;
   late int _quantity, _minimum;
   late double _purchase, _price;
@@ -41,46 +46,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Future<void> _setImage() async {
-    String value = _image;
-    String? error;
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, update) => AlertDialog(
-          title: const Text('Product image URL'),
-          content: TextFormField(
-            initialValue: value,
-            onChanged: (text) => value = text,
-            decoration: InputDecoration(
-              hintText: 'https://example.com/product.png',
-              errorText: error,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final uri = Uri.tryParse(value.trim());
-                if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
-                  update(() => error = 'Enter a valid HTTPS image URL');
-                  return;
-                }
-                Navigator.pop(context, value.trim());
-              },
-              child: const Text('Use Image'),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (result != null && mounted) setState(() => _image = result);
+    if (_saving || _uploading) return;
+    setState(() => _uploading = true);
+    try {
+      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (image == null || !mounted) return;
+      final uploaded = await CloudinaryService().uploadImage(image);
+      if (!mounted) return;
+      setState(() {
+        _uploadedImage = uploaded;
+        _image = uploaded.url;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unable to upload image: $error')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
   }
 
   Future<void> _save() async {
-    if (_saving || !_form.currentState!.validate()) return;
+    if (_saving || _uploading || !_form.currentState!.validate()) return;
     setState(() => _saving = true);
     _form.currentState!.save();
     final saved = await runMutation(context, () async {
@@ -95,6 +84,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
           price: _price,
           purchasePrice: _purchase,
           imageUrl: _image,
+          imagePublicId:
+              _uploadedImage?.publicId ?? widget.product?.imagePublicId ?? '',
+          imageFileName:
+              _uploadedImage?.fileName ?? widget.product?.imageFileName ?? '',
+          imageSizeBytes:
+              _uploadedImage?.sizeBytes ?? widget.product?.imageSizeBytes ?? 0,
         ),
         previous: widget.product,
       );
@@ -159,10 +154,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
               borderRadius: BorderRadius.circular(14),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: _setImage,
+                onTap: _saving || _uploading ? null : _setImage,
                 child: SizedBox(
                   height: 155,
-                  child: _image.isEmpty
+                  child: _uploading
+                      ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 12),
+                            Text('Uploading image...'),
+                          ],
+                        )
+                      : _image.isEmpty
                       ? const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -274,7 +278,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: _saving ? null : _save,
+              onPressed: _saving || _uploading ? null : _save,
               child: Text(
                 widget.product == null ? 'Save Product' : 'Save Changes',
               ),

@@ -2,6 +2,9 @@ class ProductUiModel {
   final String id;
   final String name;
   final String imageUrl;
+  final String imagePublicId;
+  final String imageFileName;
+  final int imageSizeBytes;
   final double price;
   final double purchasePrice;
   final int quantity;
@@ -16,6 +19,9 @@ class ProductUiModel {
     required this.price,
     required this.quantity,
     required this.category,
+    this.imagePublicId = '',
+    this.imageFileName = '',
+    this.imageSizeBytes = 0,
     String? status,
     this.purchasePrice = 0,
     this.minimumStock = 0,
@@ -32,6 +38,9 @@ class ProductUiModel {
     id: id,
     name: name,
     imageUrl: imageUrl,
+    imagePublicId: imagePublicId,
+    imageFileName: imageFileName,
+    imageSizeBytes: imageSizeBytes,
     price: price,
     quantity: value,
     category: category,
