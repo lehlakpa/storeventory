@@ -5,6 +5,7 @@ import '../../core/constants/app_sizes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../blocs/auth_bloc.dart';
+import '../../blocs/auth_state.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});

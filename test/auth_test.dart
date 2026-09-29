@@ -5,10 +5,13 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:storeventory/data/auth_repository.dart';
 import 'package:storeventory/blocs/auth_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'support/test_auth_repository.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() => FlutterSecureStorage.setMockInitialValues({}));
   test(
     'registration persists the authenticated admin and logout clears auth',
     () async {
@@ -55,9 +58,13 @@ void main() {
       final bloc = AuthBloc(repo);
       await bloc.stream.firstWhere((s) => !s.initializing);
       final busy = bloc.stream.firstWhere((s) => s.busy);
-      bloc.add(LoginRequested('test@example.com', 'password123'));
+      unawaited(
+        bloc.authenticate(() => repo.login('test@example.com', 'password123')),
+      );
       await busy;
-      bloc.add(LoginRequested('test@example.com', 'password123'));
+      unawaited(
+        bloc.authenticate(() => repo.login('test@example.com', 'password123')),
+      );
       await Future<void>.delayed(Duration.zero);
       expect(repo.loginCalls, 1);
       final signedIn = bloc.stream.firstWhere((s) => s.profile != null);

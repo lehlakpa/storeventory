@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../services/secure_storage_service.dart';
+
 class AdminProfile {
   const AdminProfile({
     required this.uid,
@@ -17,12 +19,78 @@ abstract class AuthRepository {
   Future<AdminProfile> register(String name, String email, String password);
   Future<void> logout();
   Future<void> resetPassword(String email);
+  Future<AdminProfile> unlockSession(String uid);
+  DateTime? get sessionExpiresAt;
 }
 
 class FirebaseAuthRepository implements AuthRepository {
-  FirebaseAuthRepository(this.auth, this.db);
+  FirebaseAuthRepository(
+    this.auth,
+    this.db, {
+    SecureStorageService? storage,
+    DateTime Function()? now,
+  }) : storage = storage ?? const SecureStorageService(),
+       now = now ?? DateTime.now;
   final FirebaseAuth auth;
   final FirebaseFirestore db;
+  final SecureStorageService storage;
+  final DateTime Function() now;
+  @override
+  DateTime? sessionExpiresAt;
+
+  Future<void> _saveFreshSession(User user) async {
+    // The Firebase SDK uses its refresh token; ID token expiry remains server-owned.
+    final result = await user.getIdTokenResult(true);
+    if (auth.currentUser?.uid != user.uid ||
+        result.token == null ||
+        result.expirationTime == null) {
+      throw StateError('Unable to refresh the current session.');
+    }
+    final expires = now().toUtc().add(const Duration(hours: 24));
+    await storage.saveSession({
+      'uid': user.uid,
+      'access_token': result.token,
+      if (user.refreshToken != null) 'refresh_token': user.refreshToken,
+      'access_token_expires_at': result.expirationTime!
+          .toUtc()
+          .toIso8601String(),
+      'session_expires_at': expires.toIso8601String(),
+    });
+    sessionExpiresAt = expires;
+  }
+
+  @override
+  Future<AdminProfile> unlockSession(String uid) async {
+    final saved = await storage.readSession();
+    final rawExpiry = saved?['session_expires_at'];
+    final expires = rawExpiry is String ? DateTime.tryParse(rawExpiry) : null;
+    if (saved?['uid'] != uid ||
+        auth.currentUser?.uid != uid ||
+        expires == null ||
+        !now().toUtc().isBefore(expires)) {
+      await logout();
+      throw FirebaseAuthException(
+        code: 'session-expired',
+        message: 'Your 24-hour session expired. Sign in with your password.',
+      );
+    }
+    try {
+      final admin = await profile(uid);
+      await _saveFreshSession(auth.currentUser!);
+      return admin;
+    } on FirebaseAuthException catch (e) {
+      if ([
+        'user-disabled',
+        'user-token-expired',
+        'invalid-user-token',
+        'user-not-found',
+      ].contains(e.code)) {
+        await logout();
+      }
+      rethrow;
+    }
+  }
+
   @override
   Stream<String?> get sessions => auth.authStateChanges().map((u) => u?.uid);
   @override
@@ -54,7 +122,14 @@ class FirebaseAuthRepository implements AuthRepository {
       email: email.trim(),
       password: password,
     );
-    return profile(result.user!.uid);
+    try {
+      final admin = await profile(result.user!.uid);
+      await _saveFreshSession(result.user!);
+      return admin;
+    } catch (_) {
+      await logout();
+      rethrow;
+    }
   }
 
   @override
@@ -75,9 +150,11 @@ class FirebaseAuthRepository implements AuthRepository {
         'email': email.trim(),
         'createdAt': FieldValue.serverTimestamp(),
       });
-      return await profile(user.uid);
+      final admin = await profile(user.uid);
+      await _saveFreshSession(user);
+      return admin;
     } catch (_) {
-      await auth.signOut();
+      await logout();
       throw FirebaseException(
         plugin: 'firebase_auth',
         code: 'profile-creation-failed',
@@ -87,7 +164,15 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> logout() => auth.signOut();
+  Future<void> logout() async {
+    sessionExpiresAt = null;
+    try {
+      await auth.signOut();
+    } finally {
+      await storage.clearSession();
+    }
+  }
+
   @override
   Future<void> resetPassword(String email) =>
       auth.sendPasswordResetEmail(email: email.trim());

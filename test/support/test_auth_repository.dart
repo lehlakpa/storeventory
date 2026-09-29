@@ -9,6 +9,10 @@ class TestAuthRepository implements AuthRepository {
   Completer<void>? loginGate;
   int loginCalls = 0;
   @override
+  DateTime? sessionExpiresAt;
+  @override
+  Future<AdminProfile> unlockSession(String uid) => profile(uid);
+  @override
   Stream<String?> get sessions async* {
     yield currentUid;
     yield* changes.stream;

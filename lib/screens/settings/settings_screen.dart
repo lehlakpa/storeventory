@@ -5,6 +5,8 @@ import '../../core/constants/app_sizes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../blocs/auth_bloc.dart';
+import '../../blocs/auth_event.dart';
+import '../../blocs/auth_state.dart';
 import '../../blocs/theme_cubit.dart';
 import 'profile_screen.dart';
 import 'about_screen.dart';

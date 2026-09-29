@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:storeventory/services/secure_storage_service.dart';
 import 'package:storeventory/app.dart';
 import 'package:storeventory/data/inventory_repository.dart';
 import 'package:storeventory/screens/auth/login_screen.dart';
@@ -11,20 +12,31 @@ import 'package:storeventory/screens/settings/profile_screen.dart';
 import 'package:storeventory/screens/settings/about_screen.dart';
 
 import 'support/test_auth_repository.dart';
+import 'support/test_biometric_service.dart';
 
 void main() {
+  setUp(() => FlutterSecureStorage.setMockInitialValues({}));
   testWidgets('profile, about and persistent appearance settings', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     final auth = TestAuthRepository()..currentUid = 'test-user';
     final repo = FirestoreInventoryRepository(
       FakeFirebaseFirestore(),
       'test-user',
     );
     await tester.pumpWidget(
-      App(authRepository: auth, inventoryRepository: repo),
+      App(
+        authRepository: auth,
+        inventoryRepository: repo,
+        hasSeenOnboarding: true,
+        biometrics: TestBiometricService(),
+      ),
     );
+    await tester.pumpAndSettle();
+    expect(find.byType(MainScreen), findsNothing);
+    await tester.ensureVisible(find.text('Login with biometrics'));
+    await tester.tap(find.text('Login with biometrics'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Profile'));
     await tester.pumpAndSettle();
@@ -49,10 +61,7 @@ void main() {
       Theme.of(tester.element(find.text('Appearance'))).brightness,
       Brightness.dark,
     );
-    expect(
-      (await SharedPreferences.getInstance()).getString('theme_mode'),
-      'dark',
-    );
+    expect(await SecureStorageService.storage.read(key: 'theme_mode'), 'dark');
     await tester.tap(find.text('About Storeventory'));
     await tester.pumpAndSettle();
     expect(find.byType(AboutScreen), findsOneWidget);
@@ -65,8 +74,16 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await tester.pumpWidget(
-      App(authRepository: auth, inventoryRepository: repo),
+      App(
+        authRepository: auth,
+        inventoryRepository: repo,
+        hasSeenOnboarding: true,
+        biometrics: TestBiometricService(),
+      ),
     );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Login with biometrics'));
+    await tester.tap(find.text('Login with biometrics'));
     await tester.pumpAndSettle();
     expect(
       tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
@@ -85,10 +102,7 @@ void main() {
       Theme.of(tester.element(find.text('Appearance'))).brightness,
       Brightness.light,
     );
-    expect(
-      (await SharedPreferences.getInstance()).getString('theme_mode'),
-      'light',
-    );
+    expect(await SecureStorageService.storage.read(key: 'theme_mode'), 'light');
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     await auth.changes.close();
@@ -97,7 +111,7 @@ void main() {
   testWidgets('onboarding, validated auth, empty data and logout', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     final auth = TestAuthRepository();
     final db = FakeFirebaseFirestore();
     await tester.pumpWidget(
@@ -125,6 +139,7 @@ void main() {
     await tester.tap(find.text('Login'));
     await tester.pumpAndSettle();
     expect(find.byType(MainScreen), findsOneWidget);
+    expect(find.text('Welcome back! You are signed in.'), findsOneWidget);
     expect(
       find.text('No products yet. Add your first product.'),
       findsOneWidget,
@@ -178,7 +193,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(MainScreen), findsNothing);
     expect(
-      find.textContaining('Unable to access your account'),
+      find.text('We could not complete your request. Please try again.'),
       findsOneWidget,
     );
     await tester.pumpWidget(const SizedBox());

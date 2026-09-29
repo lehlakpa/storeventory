@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'services/secure_storage_service.dart';
 
 import 'app.dart';
 import 'core/theme/app_theme.dart';
@@ -24,10 +25,11 @@ Future<void> main() async {
               storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
             ),
     );
-    final prefs = await SharedPreferences.getInstance();
-    runApp(
-      App(hasSeenOnboarding: prefs.getBool('has_seen_onboarding') ?? false),
+    await const SecureStorageService().migrateLegacyPreferences();
+    final seen = await SecureStorageService.storage.read(
+      key: 'has_seen_onboarding',
     );
+    runApp(App(hasSeenOnboarding: seen == 'true'));
   } catch (_) {
     runApp(
       MaterialApp(
