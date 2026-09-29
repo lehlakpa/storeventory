@@ -54,6 +54,17 @@ void main() {
   });
 
   test(
+    'disabled fingerprint setting prevents biometric login and scanning',
+    () async {
+      biometrics.enabled = false;
+      final state = await unlock();
+      expect(state.profile, isNull);
+      expect(state.error, contains('enable it in Settings'));
+      expect(biometrics.calls, 0);
+    },
+  );
+
+  test(
     'an open account logs out when its session deadline is reached',
     () async {
       repo.sessionExpiresAt = DateTime.now().subtract(

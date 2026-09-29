@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../blocs/auth_bloc.dart';
 import '../../blocs/auth_state.dart';
+import '../../blocs/auth_event.dart';
+import '../../widgets/custom_loading.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -16,6 +18,7 @@ class ProfileScreen extends StatelessWidget {
     body: BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final profile = state.profile;
+        if (state.busy) return const CustomLoading(message: 'Signing out...');
         return ListView(
           padding: AppSizes.screenPadding,
           children: [
@@ -55,6 +58,12 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: AppSizes.lg),
+            OutlinedButton.icon(
+              onPressed: () => context.read<AuthBloc>().add(LogoutRequested()),
+              icon: const Icon(Icons.logout),
+              label: const Text('Logout'),
             ),
           ],
         );

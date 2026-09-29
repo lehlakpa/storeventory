@@ -5,13 +5,13 @@ import '../../core/constants/app_sizes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../blocs/auth_bloc.dart';
-import '../../blocs/auth_event.dart';
 import '../../blocs/auth_state.dart';
 import '../../blocs/theme_cubit.dart';
 import 'profile_screen.dart';
 import 'about_screen.dart';
 import '../auth/register_screen.dart';
 import '../../widgets/custom_loading.dart';
+import '../../widgets/biometric_settings_tile.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -22,7 +22,7 @@ class SettingsScreen extends StatelessWidget {
       return Scaffold(
         appBar: AppBar(title: const Text('Settings')),
         body: state.busy
-            ? const CustomLoading(message: 'Signing out...')
+            ? const CustomLoading(message: 'Please wait...')
             : ListView(
                 padding: AppSizes.screenPadding,
                 children: [
@@ -44,6 +44,13 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   const Divider(),
+                  if (profile != null) ...[
+                    BiometricSettingsTile(
+                      key: ValueKey(profile.uid),
+                      uid: profile.uid,
+                    ),
+                    const Divider(),
+                  ],
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
                     child: Column(
@@ -119,13 +126,6 @@ class SettingsScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(builder: (_) => const RegisterScreen()),
                     ),
-                  ),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.logout),
-                    title: const Text('Logout'),
-                    onTap: () =>
-                        context.read<AuthBloc>().add(LogoutRequested()),
                   ),
                 ],
               ),

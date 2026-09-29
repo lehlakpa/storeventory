@@ -48,6 +48,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final revision = ++_revision;
       emit(const AuthState(busy: true));
       try {
+        if (!await this.biometrics.isEnabled(uid)) {
+          emit(
+            const AuthState(
+              error: 'Fingerprint login is disabled. Sign in with your password, then enable it in Settings.',
+            ),
+          );
+          return;
+        }
         if (!await this.biometrics.isAvailable()) {
           emit(
             const AuthState(

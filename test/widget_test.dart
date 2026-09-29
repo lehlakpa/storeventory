@@ -172,6 +172,9 @@ void main() {
     await tester.pumpAndSettle();
     await nav('Settings');
     expect(find.text('test@example.com'), findsOneWidget);
+    expect(find.text('Logout'), findsNothing);
+    await tester.tap(find.text('Test User'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Logout'));
     await tester.pumpAndSettle();
     expect(find.byType(MainScreen), findsNothing);
