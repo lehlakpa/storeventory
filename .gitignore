@@ -49,3 +49,6 @@ app.*.map.json
 
 # Local Firebase run configuration
 firebase.config.json
+node_modules/
+.firebase/
+.npm-cache/

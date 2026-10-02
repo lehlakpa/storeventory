@@ -12,6 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../blocs/inventory_cubit.dart';
 import '../../widgets/run_mutation.dart';
+import '../../widgets/reauthenticate_dialog.dart';
 import 'record_sale_screen.dart';
 
 class SaleDetailsScreen extends StatefulWidget {
@@ -55,6 +56,7 @@ class _SaleDetailsScreenState extends State<SaleDetailsScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
+    if (!await confirmSensitiveAction(context) || !mounted) return;
     setState(() => _busy = true);
     final success = await runMutation(context, () async {
       await context.read<InventoryCubit>().deleteSale(sale.id);

@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../widgets/inventory_builder.dart';
 import '../../widgets/run_mutation.dart';
+import '../../widgets/reauthenticate_dialog.dart';
 import '../../widgets/product_image.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/update_stock_dialog.dart';
@@ -174,6 +175,10 @@ class ProductDetailsScreen extends StatelessWidget {
                         ),
                       );
                       if (remove == true && context.mounted) {
+                        if (!await confirmSensitiveAction(context) ||
+                            !context.mounted) {
+                          return;
+                        }
                         final deleted = await runMutation(context, () async {
                           await context.read<InventoryCubit>().remove(p.id);
                           return true;

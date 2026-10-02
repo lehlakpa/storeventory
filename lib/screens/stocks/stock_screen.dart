@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../widgets/inventory_builder.dart';
 import '../../widgets/run_mutation.dart';
+import '../../widgets/reauthenticate_dialog.dart';
 import '../../widgets/update_stock_dialog.dart';
 import '../../models/product_ui_model.dart';
 import '../../widgets/product_tile.dart';
@@ -56,6 +57,7 @@ class _StockScreenState extends State<StockScreen> {
       ),
     );
     if (!mounted || confirmed != true) return;
+    if (!await confirmSensitiveAction(context) || !mounted) return;
     final deleted = await runMutation(context, () async {
       await context.read<InventoryCubit>().remove(product.id);
       return true;

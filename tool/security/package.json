@@ -1,0 +1,18 @@
+{
+  "name": "storeventory-security-tools",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.12.0"},
+  "overrides": {
+    "@grpc/grpc-js": "^1.13.6",
+    "uuid": "^11.1.1"
+  },
+  "scripts": {
+    "test": "node --test rules.test.mjs"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0",
+    "firebase-admin": "^14.5.0"
+  }
+}

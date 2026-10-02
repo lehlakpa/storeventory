@@ -17,7 +17,12 @@ void main() {
     () async {
       final auth = MockFirebaseAuth();
       final db = FakeFirebaseFirestore();
-      final repo = FirebaseAuthRepository(auth, db);
+      // firebase_auth_mocks supplies a fixed authTimestamp in milliseconds.
+      final repo = FirebaseAuthRepository(
+        auth,
+        db,
+        now: () => DateTime.fromMillisecondsSinceEpoch(1655946582),
+      );
       final admin = await repo.register(
         ' New Admin ',
         'admin@test.invalid',
@@ -40,10 +45,18 @@ void main() {
       final auth = MockFirebaseAuth();
       final db = FakeFirebaseFirestore(
         securityRules: '''service cloud.firestore {
-      match /databases/{database}/documents { match /admins/{id} { allow read, write: if false; } }
+      match /databases/{database}/documents {
+        match /session_controls/{id} { allow read: if true; }
+        match /auth_sessions/{id}/sessions/{time} { allow read, write: if true; }
+        match /admins/{id} { allow read, write: if false; }
+      }
     }''',
       );
-      final repo = FirebaseAuthRepository(auth, db);
+      final repo = FirebaseAuthRepository(
+        auth,
+        db,
+        now: () => DateTime.fromMillisecondsSinceEpoch(1655946582),
+      );
       await expectLater(
         repo.register('Admin', 'test@example.com', 'password123'),
         throwsException,

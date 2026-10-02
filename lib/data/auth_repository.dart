@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -20,6 +22,7 @@ abstract class AuthRepository {
   Future<void> logout();
   Future<void> resetPassword(String email);
   Future<AdminProfile> unlockSession(String uid);
+  Future<void> reauthenticate(String password);
   DateTime? get sessionExpiresAt;
 }
 
@@ -38,15 +41,69 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   DateTime? sessionExpiresAt;
 
-  Future<void> _saveFreshSession(User user) async {
+  Future<void> _saveFreshSession(
+    User user, {
+    DateTime? deadline,
+    bool createSession = true,
+  }) async {
     // The Firebase SDK uses its refresh token; ID token expiry remains server-owned.
     final result = await user.getIdTokenResult(true);
     if (auth.currentUser?.uid != user.uid ||
         result.token == null ||
-        result.expirationTime == null) {
+        result.expirationTime == null ||
+        result.authTime == null) {
       throw StateError('Unable to refresh the current session.');
     }
-    final expires = now().toUtc().add(const Duration(hours: 24));
+    final tokenDeadline = result.authTime!.toUtc().add(
+      const Duration(days: 30),
+    );
+    var expires = deadline != null && deadline.isBefore(tokenDeadline)
+        ? deadline
+        : tokenDeadline;
+    if (!now().toUtc().isBefore(expires)) {
+      throw FirebaseAuthException(code: 'session-expired');
+    }
+    // Read from the server: a cached control document cannot authorize unlock.
+    final control = await db
+        .collection('session_controls')
+        .doc(user.uid)
+        .get(const GetOptions(source: Source.server));
+    final data = control.data();
+    if (data?['disabled'] == true) {
+      throw FirebaseAuthException(code: 'user-disabled');
+    }
+    final revokedBefore = data?['revokedBefore'];
+    if (revokedBefore is num &&
+        result.authTime!.millisecondsSinceEpoch ~/ 1000 <= revokedBefore) {
+      throw FirebaseAuthException(code: 'user-token-expired');
+    }
+    if (auth.currentUser?.uid != user.uid) {
+      throw FirebaseAuthException(code: 'invalid-user-token');
+    }
+    final sessionRef = db
+        .collection('auth_sessions')
+        .doc(user.uid)
+        .collection('sessions')
+        .doc('${result.authTime!.millisecondsSinceEpoch ~/ 1000}');
+    final session = await sessionRef.get(
+      const GetOptions(source: Source.server),
+    );
+    if (session.exists) {
+      final serverExpiry = session.data()?['expiresAt'];
+      if (serverExpiry is! Timestamp) {
+        throw FirebaseAuthException(code: 'session-expired');
+      }
+      if (serverExpiry.toDate().isBefore(expires)) {
+        expires = serverExpiry.toDate().toUtc();
+      }
+    } else if (createSession) {
+      await sessionRef.set({'expiresAt': Timestamp.fromDate(expires)});
+    } else {
+      throw FirebaseAuthException(code: 'session-expired');
+    }
+    if (!now().toUtc().isBefore(expires)) {
+      throw FirebaseAuthException(code: 'session-expired');
+    }
     await storage.saveSession({
       'uid': user.uid,
       'access_token': result.token,
@@ -71,12 +128,16 @@ class FirebaseAuthRepository implements AuthRepository {
       await logout();
       throw FirebaseAuthException(
         code: 'session-expired',
-        message: 'Your 24-hour session expired. Sign in with your password.',
+        message: 'Your 30-day session expired. Sign in with your password.',
       );
     }
     try {
+      await _saveFreshSession(
+        auth.currentUser!,
+        deadline: expires,
+        createSession: false,
+      );
       final admin = await profile(uid);
-      await _saveFreshSession(auth.currentUser!);
       return admin;
     } on FirebaseAuthException catch (e) {
       if ([
@@ -84,6 +145,7 @@ class FirebaseAuthRepository implements AuthRepository {
         'user-token-expired',
         'invalid-user-token',
         'user-not-found',
+        'session-expired',
       ].contains(e.code)) {
         await logout();
       }
@@ -92,10 +154,93 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Stream<String?> get sessions => auth.authStateChanges().map((u) => u?.uid);
+  Future<void> reauthenticate(String password) async {
+    final user = auth.currentUser;
+    if (user == null ||
+        user.email == null ||
+        sessionExpiresAt == null ||
+        !now().toUtc().isBefore(sessionExpiresAt!)) {
+      await logout();
+      throw FirebaseAuthException(code: 'session-expired');
+    }
+    final deadline = sessionExpiresAt!;
+    try {
+      await user.reauthenticateWithCredential(
+        EmailAuthProvider.credential(email: user.email!, password: password),
+      );
+      // Password verification allows a sensitive action but does not slide the
+      // app's original login deadline.
+      await _saveFreshSession(user, deadline: deadline);
+    } on FirebaseAuthException catch (e) {
+      if ([
+        'user-disabled',
+        'user-token-expired',
+        'invalid-user-token',
+        'user-not-found',
+        'session-expired',
+      ].contains(e.code)) {
+        await logout();
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Stream<String?> get sessions => Stream<String?>.multi((controller) {
+    StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? controls;
+    var revision = 0;
+    final authSubscription = auth.authStateChanges().listen((user) async {
+      final currentRevision = ++revision;
+      await controls?.cancel();
+      if (currentRevision != revision) return;
+      controller.add(user?.uid);
+      if (user == null) return;
+      controls = db
+          .collection('session_controls')
+          .doc(user.uid)
+          .snapshots()
+          .listen(
+            (snapshot) async {
+              try {
+                final data = snapshot.data();
+                if (data == null) return;
+                final token = await user.getIdTokenResult();
+                if (currentRevision != revision ||
+                    auth.currentUser?.uid != user.uid) {
+                  return;
+                }
+                final cutoff = data['revokedBefore'];
+                if (data['disabled'] == true ||
+                    (cutoff is num &&
+                        token.authTime != null &&
+                        token.authTime!.millisecondsSinceEpoch ~/ 1000 <=
+                            cutoff)) {
+                  await logout();
+                }
+              } catch (e, stack) {
+                if (currentRevision == revision) controller.addError(e, stack);
+              }
+            },
+            onError: (Object e, StackTrace stack) {
+              if (currentRevision == revision) controller.addError(e, stack);
+            },
+          );
+    }, onError: controller.addError);
+    controller.onCancel = () async {
+      ++revision;
+      await authSubscription.cancel();
+      await controls?.cancel();
+    };
+  });
   @override
   Future<AdminProfile> profile(String uid) async {
-    final doc = await db.collection('admins').doc(uid).get();
+    final doc = await db
+        .collection('admins')
+        .doc(uid)
+        .get(const GetOptions(source: Source.server));
+    if (auth.currentUser?.uid != uid) {
+      throw FirebaseAuthException(code: 'invalid-user-token');
+    }
     var data = doc.data();
     if (data == null) {
       final user = auth.currentUser;
@@ -123,8 +268,8 @@ class FirebaseAuthRepository implements AuthRepository {
       password: password,
     );
     try {
-      final admin = await profile(result.user!.uid);
       await _saveFreshSession(result.user!);
+      final admin = await profile(result.user!.uid);
       return admin;
     } catch (_) {
       await logout();
@@ -144,6 +289,7 @@ class FirebaseAuthRepository implements AuthRepository {
     );
     final user = result.user!;
     try {
+      await _saveFreshSession(user);
       await user.updateDisplayName(name.trim());
       await db.collection('admins').doc(user.uid).set({
         'name': name.trim(),
@@ -151,7 +297,6 @@ class FirebaseAuthRepository implements AuthRepository {
         'createdAt': FieldValue.serverTimestamp(),
       });
       final admin = await profile(user.uid);
-      await _saveFreshSession(user);
       return admin;
     } catch (_) {
       await logout();

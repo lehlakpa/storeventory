@@ -1,23 +1,81 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isLoggedIn() { return request.auth != null; }
+    function notRevoked() {
+      let path = /databases/$(database)/documents/session_controls/$(request.auth.uid);
+      return !exists(path) ||
+        (get(path).data.get('disabled', false) == false &&
+         request.auth.token.auth_time > get(path).data.get('revokedBefore', 0));
+    }
+    function authenticatedWithin(days) {
+      return request.auth != null &&
+        timestamp.value(request.auth.token.auth_time * 1000) <= request.time &&
+        request.time < timestamp.value(request.auth.token.auth_time * 1000)
+          + duration.value(days, 'd') && notRevoked();
+    }
+    function recentPassword() {
+      return authenticatedWithin(30) &&
+        request.auth.token.firebase.sign_in_provider == 'password' &&
+        request.time < timestamp.value(request.auth.token.auth_time * 1000)
+          + duration.value(5, 'm');
+    }
+    function isLoggedIn() {
+      let path = /databases/$(database)/documents/auth_sessions/$(request.auth.uid)/sessions/$(string(request.auth.token.auth_time));
+      return authenticatedWithin(30) && exists(path) &&
+        request.time < get(path).data.expiresAt;
+    }
+    function sensitiveAction() { return isLoggedIn() && recentPassword(); }
+    // Only the trusted Admin SDK can change revocation controls.
+    match /session_controls/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+    // Immutable deadline for each password authentication. The app carries the
+    // original deadline forward when reauthenticating a sensitive action.
+    match /auth_sessions/{uid}/sessions/{authTime} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow create: if recentPassword() && request.auth.uid == uid &&
+        authTime == string(request.auth.token.auth_time) &&
+        request.resource.data.keys().hasOnly(['expiresAt']) &&
+        request.resource.data.expiresAt is timestamp &&
+        request.resource.data.expiresAt > request.time &&
+        request.resource.data.expiresAt <=
+          timestamp.value(request.auth.token.auth_time * 1000) + duration.value(30, 'd');
+      allow list, update, delete: if false;
+    }
     match /admins/{adminId} {
-      allow read, create, update: if isLoggedIn() && request.auth.uid == adminId;
+      allow read, create: if isLoggedIn() && request.auth.uid == adminId;
+      allow update: if sensitiveAction() && request.auth.uid == adminId;
       allow delete: if false;
     }
-    match /products/{productId} { allow read, create, update, delete: if isLoggedIn(); }
-    match /categories/{categoryId} { allow read, create, update, delete: if isLoggedIn(); }
-    match /customers/{customerId} { allow read, create, update, delete: if isLoggedIn(); }
-    match /sales/{saleId} { allow read, create, update, delete: if isLoggedIn(); }
-    match /orders/{orderId} { allow read, create, update, delete: if isLoggedIn(); }
+    match /products/{productId} {
+      allow read, create, update: if isLoggedIn();
+      allow delete: if sensitiveAction();
+    }
+    match /categories/{categoryId} {
+      allow read, create, update: if isLoggedIn();
+      allow delete: if sensitiveAction();
+    }
+    match /customers/{customerId} {
+      allow read, create, update: if isLoggedIn();
+      allow delete: if sensitiveAction();
+    }
+    match /sales/{saleId} {
+      allow read, create: if isLoggedIn();
+      allow update, delete: if sensitiveAction();
+    }
+    match /orders/{orderId} {
+      allow read, create, update: if isLoggedIn();
+      allow delete: if sensitiveAction();
+    }
     match /stock_history/{historyId} {
       allow read, create: if isLoggedIn();
       allow update, delete: if false;
     }
     match /notifications/{notificationId} { allow read, create, update, delete: if isLoggedIn(); }
     match /settings/{settingId} {
-      allow read, create, update: if isLoggedIn();
+      allow read: if isLoggedIn();
+      allow create, update: if sensitiveAction();
       allow delete: if false;
     }
     match /{document=**} { allow read, write: if false; }

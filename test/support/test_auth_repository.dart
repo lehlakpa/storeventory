@@ -8,6 +8,14 @@ class TestAuthRepository implements AuthRepository {
   bool failLogin = false;
   Completer<void>? loginGate;
   int loginCalls = 0;
+  int reauthenticationCalls = 0;
+  bool failReauthentication = false;
+  @override
+  Future<void> reauthenticate(String password) async {
+    reauthenticationCalls++;
+    if (failReauthentication) throw StateError('Authentication failed');
+  }
+
   @override
   DateTime? sessionExpiresAt;
   @override

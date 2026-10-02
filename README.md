@@ -17,6 +17,11 @@ Rules are saved in firestore.rules and match the supplied policy. Inventory coll
 
 ## Stored data
 
+Authentication uses fixed 30-day sessions with optional biometric unlock,
+password confirmation for sensitive actions, and server-side expiry/revocation.
+See [session security and rollout](tool/security/README.md) for deployment,
+administrative revocation, and emulator tests.
+
 Product photos are selected from the photo library/file picker and uploaded to Cloudinary before saving the product. The default cloud is `dglxnraim` with unsigned preset `flutter_coffee_test`. Override these with `--dart-define=CLOUDINARY_CLOUD_NAME=... --dart-define=CLOUDINARY_UPLOAD_PRESET=...`. The preset must allow unsigned image uploads. Images must be non-empty and at most 10 MB. Firestore stores `imageUrl`, `imagePublicId`, `imageFileName`, and `imageSizeBytes`; image bytes stay in Cloudinary. Failed product saves retain the uploaded image for retry. Cancelling after upload or replacing/deleting a product does not delete Cloudinary assets.
 
 - admins/{authUid}: name, email, createdAt (server timestamp).

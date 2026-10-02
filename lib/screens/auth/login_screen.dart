@@ -7,7 +7,6 @@ import '../../blocs/auth_state.dart';
 import '../../blocs/login/login_bloc.dart';
 import '../../blocs/login/login_event.dart';
 import '../../blocs/login/login_state.dart';
-
 import 'auth_form.dart';
 
 class LoginScreen extends StatelessWidget {

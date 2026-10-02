@@ -105,7 +105,7 @@ class _BiometricSettingsTileState extends State<BiometricSettingsTile> {
     subtitle: Text(
       _error ??
           (_enabled
-              ? 'Use fingerprint or face recognition to unlock your saved session.'
+              ? 'Unlock with fingerprint or face recognition for up to 30 days after password sign-in.'
               : 'Verify your fingerprint or face to enable biometric login.'),
     ),
     value: _enabled,

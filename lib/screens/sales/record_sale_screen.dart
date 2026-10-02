@@ -10,6 +10,7 @@ import '../../blocs/inventory_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../widgets/run_mutation.dart';
+import '../../widgets/reauthenticate_dialog.dart';
 import 'sale_details_screen.dart';
 import '../../models/sale_ui_model.dart';
 
@@ -52,6 +53,14 @@ class _RecordSaleScreenState extends State<RecordSaleScreen> {
     if (_saving || !_form.currentState!.validate()) return;
     _form.currentState!.save();
     setState(() => _saving = true);
+    if (widget.sale != null) {
+      final verified = await confirmSensitiveAction(context);
+      if (!mounted) return;
+      if (!verified) {
+        setState(() => _saving = false);
+        return;
+      }
+    }
     final sale = await runMutation(
       context,
       () => widget.sale != null
